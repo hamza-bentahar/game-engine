@@ -1,5 +1,4 @@
 import { Character } from './character.js';
-import { Obstacle } from './obstacle.js';
 import { IsometricGrid } from './grid.js';
 
 class IsometricGame {
