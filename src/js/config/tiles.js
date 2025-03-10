@@ -1,0 +1,153 @@
+// Tile type configuration
+export const tileConfig = {
+    // Mapping of tile numbers to their properties
+    tiles: {
+        0: { isObstacle: false },
+        1: { isObstacle: false },
+        2: { isObstacle: false },
+        3: { isObstacle: false },
+        4: { isObstacle: false },
+        5: { isObstacle: false },
+        6: { isObstacle: false },
+        7: { isObstacle: false },
+        8: { isObstacle: false },
+        9: { isObstacle: false },
+        10: { isObstacle: false },
+        11: { isObstacle: false },
+        12: { isObstacle: false },
+        13: { isObstacle: false },
+        14: { isObstacle: false },
+        15: { isObstacle: false },
+        16: { isObstacle: false },
+        17: { isObstacle: false },
+        18: { isObstacle: false },
+        19: { isObstacle: false },
+        20: { isObstacle: false },
+        21: { isObstacle: false },
+        22: { isObstacle: false },
+        23: { isObstacle: false },
+        24: { isObstacle: false },
+        25: { isObstacle: false },
+        26: { isObstacle: false },
+        27: { isObstacle: false },
+        28: { isObstacle: false },
+        29: { isObstacle: false },
+        30: { isObstacle: false },
+        31: { isObstacle: false },
+        32: { isObstacle: false },
+        33: { isObstacle: false },
+        34: { isObstacle: false },
+        35: { isObstacle: false },
+        36: { isObstacle: false },
+        37: { isObstacle: false },
+        38: { isObstacle: false },
+        39: { isObstacle: false },
+        40: { isObstacle: false },
+        41: { isObstacle: false },
+        42: { isObstacle: false },
+        43: { isObstacle: false },
+        44: { isObstacle: false },
+        45: { isObstacle: false },
+        46: { isObstacle: false },
+        47: { isObstacle: false },
+        48: { isObstacle: false },
+        49: { isObstacle: false },
+        50: { isObstacle: false },
+        51: { isObstacle: false },
+        52: { isObstacle: false },
+        53: { isObstacle: true },
+        54: { isObstacle: false },
+        55: { isObstacle: false },
+        56: { isObstacle: false },
+        57: { isObstacle: false },
+        58: { isObstacle: false },
+        59: { isObstacle: false },
+        60: { isObstacle: false },
+        61: { isObstacle: false },
+        62: { isObstacle: false },
+        63: { isObstacle: false },
+        64: { isObstacle: false },
+        65: { isObstacle: false },
+        66: { isObstacle: false },
+        67: { isObstacle: false },
+        68: { isObstacle: false },
+        69: { isObstacle: false },
+        70: { isObstacle: false },
+        71: { isObstacle: false },
+        72: { isObstacle: false },
+        73: { isObstacle: false },
+        74: { isObstacle: false },
+        75: { isObstacle: false },
+        76: { isObstacle: false },
+        77: { isObstacle: false },
+        78: { isObstacle: false },
+        79: { isObstacle: false },
+        80: { isObstacle: false },
+        81: { isObstacle: false },
+        82: { isObstacle: false },
+        83: { isObstacle: false },
+        84: { isObstacle: false },
+        85: { isObstacle: false },
+        86: { isObstacle: false },
+        87: { isObstacle: false },
+        88: { isObstacle: false },
+        89: { isObstacle: false },
+        90: { isObstacle: false },
+        91: { isObstacle: false },
+        92: { isObstacle: false },
+        93: { isObstacle: false },
+        94: { isObstacle: false },
+        95: { isObstacle: false },
+        96: { isObstacle: false },
+        97: { isObstacle: false },
+        98: { isObstacle: false },
+        99: { isObstacle: false },
+        100: { isObstacle: false },
+        101: { isObstacle: false },
+        102: { isObstacle: false },
+        103: { isObstacle: false },
+        104: { isObstacle: false },
+        105: { isObstacle: false },
+        106: { isObstacle: false },
+        107: { isObstacle: false },
+        108: { isObstacle: false },
+        109: { isObstacle: false },
+        110: { isObstacle: false },
+        111: { isObstacle: false },
+        112: { isObstacle: false },
+        113: { isObstacle: false },
+        114: { isObstacle: false },
+        115: { isObstacle: false },
+        116: { isObstacle: false },
+        117: { isObstacle: false },
+        118: { isObstacle: false },
+        119: { isObstacle: false },
+        120: { isObstacle: false }
+    },
+
+    // Helper function to check if a tile is an obstacle
+    isObstacle: function(tileIndex) {
+        return this.tiles[tileIndex]?.isObstacle ?? false;
+    },
+
+    // Helper function to get all normal tiles
+    getNormalTiles: function() {
+        return Object.entries(this.tiles)
+            .filter(([_, props]) => !props.isObstacle)
+            .map(([index]) => parseInt(index));
+    },
+
+    // Helper function to get all obstacle tiles
+    getObstacleTiles: function() {
+        return Object.entries(this.tiles)
+            .filter(([_, props]) => props.isObstacle)
+            .map(([index]) => parseInt(index));
+    },
+
+    // Helper function to toggle a tile's obstacle status
+    toggleTileType: function(tileIndex) {
+        if (this.tiles[tileIndex]) {
+            this.tiles[tileIndex].isObstacle = !this.tiles[tileIndex].isObstacle;
+        }
+    }
+}; 
