@@ -125,11 +125,10 @@ class IsometricGame {
         this.canvas.width = Math.floor(width);
         this.canvas.height = Math.floor(height);
         
-        // Center the canvas on screen
+        // Position canvas with padding from top-left corner
         this.canvas.style.position = 'absolute';
-        this.canvas.style.left = '50%';
-        this.canvas.style.top = '50%';
-        this.canvas.style.transform = 'translate(-50%, -50%)';
+        this.canvas.style.left = '20px';
+        this.canvas.style.top = '20px';
     }
     
     handleClick(event) {
