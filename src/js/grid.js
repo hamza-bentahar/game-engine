@@ -1,3 +1,117 @@
+class Tile {
+    constructor(x, y, tileType = 'default', isObstacle = false) {
+        this.x = x;
+        this.y = y;
+        this.tileType = tileType;
+        this.isObstacle = isObstacle;
+        this.heightOffset = 0;
+        this.isHovered = false;
+    }
+
+    // Convert tile coordinates to screen coordinates
+    toScreen(startX, startY, tileWidth, tileHeight) {
+        return {
+            x: startX + (this.x - this.y) * tileWidth / 2,
+            y: startY + (this.x + this.y) * tileHeight / 2
+        };
+    }
+
+    // Draw the tile
+    draw(ctx, startX, startY, tileWidth, tileHeight, sprites, useSprites, debugMode = false) {
+        const { x: screenX, y: screenY } = this.toScreen(startX, startY, tileWidth, tileHeight);
+        
+        if (useSprites && sprites.isLoaded) {
+            const tileSprite = sprites.tiles[this.tileType];
+            if (!tileSprite) return;
+
+            const drawX = screenX - tileWidth / 2;
+            const drawY = screenY - tileHeight - this.heightOffset;
+            
+            ctx.drawImage(
+                sprites.sheet,
+                tileSprite.x,
+                tileSprite.y,
+                sprites.tileWidth,
+                sprites.tileHeight,
+                drawX,
+                drawY,
+                tileWidth,
+                tileHeight * 2
+            );
+        } else {
+            // Draw geometric shape
+            ctx.beginPath();
+            ctx.moveTo(screenX, screenY - this.heightOffset);
+            ctx.lineTo(screenX + tileWidth / 2, screenY + tileHeight / 2 - this.heightOffset);
+            ctx.lineTo(screenX, screenY + tileHeight - this.heightOffset);
+            ctx.lineTo(screenX - tileWidth / 2, screenY + tileHeight / 2 - this.heightOffset);
+            ctx.closePath();
+            
+            // Fill tile with hover effect
+            let fillColor = this.isObstacle ? '#c0392b' : '#3498db';
+            let strokeColor = this.isObstacle ? '#922b21' : '#2980b9';
+            
+            if (this.isHovered) {
+                // Lighten the colors for hover effect
+                fillColor = this.isObstacle ? '#e74c3c' : '#5dade2';
+                strokeColor = this.isObstacle ? '#c0392b' : '#3498db';
+                
+                // Add glow effect
+                ctx.shadowColor = this.isObstacle ? 'rgba(231, 76, 60, 0.5)' : 'rgba(93, 173, 226, 0.5)';
+                ctx.shadowBlur = 10;
+            }
+            
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            
+            // Draw outline
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = this.isHovered ? 2 : 1;
+            ctx.stroke();
+            
+            // Reset shadow effects
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.lineWidth = 1;
+        }
+
+        if (debugMode) {
+            // Add coordinates text
+            ctx.fillStyle = 'white';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${this.x},${this.y}`, screenX, screenY + tileHeight / 2 - this.heightOffset);
+        }
+    }
+
+    // Set tile type
+    setTileType(tileType) {
+        this.tileType = tileType;
+    }
+
+    // Toggle obstacle state
+    toggleObstacle() {
+        this.isObstacle = !this.isObstacle;
+        return this.isObstacle;
+    }
+
+    // Set height offset
+    setHeightOffset(offset) {
+        this.heightOffset = offset;
+    }
+
+    // Set hover state
+    setHovered(hovered) {
+        this.isHovered = hovered;
+    }
+
+    // Get string key for storage
+    getKey() {
+        return `${this.x},${this.y}`;
+    }
+}
+
 class IsometricGrid {
     constructor(canvas, nbRows, nbCols) {
         this.canvas = canvas;
@@ -6,8 +120,8 @@ class IsometricGrid {
         this.nbCols = nbCols;
         
         // Maintain 2:1 ratio for width:height for isometric tiles
-        this.tileWidth = 128
-        this.tileHeight = this.tileWidth / 2
+        this.tileWidth = 128;
+        this.tileHeight = this.tileWidth / 2;
         
         // Starting position
         this.startX = -1;
@@ -28,19 +142,18 @@ class IsometricGrid {
         // Add sprite toggle state
         this.useSprites = true;
         
-        // Add available tiles storage
-        this.availableTiles = new Set();
-
-        // Add obstacles storage
-        this.obstacles = new Set();
+        // Add tiles storage
+        this.tiles = new Map();
+        
+        // Add hovered tile tracking
+        this.hoveredTileKey = null;
         
         // Spritesheet configuration
         this.sprites = {
             sheet: null,
             isLoaded: false,
-            tileWidth: 32,  // Width of each tile in the spritesheet
-            tileHeight: 32, // Height of each tile in the spritesheet
-            // Define all available tile types and their positions in the spritesheet
+            tileWidth: 32,
+            tileHeight: 32,
             tiles: {}
         };
 
@@ -57,19 +170,17 @@ class IsometricGrid {
 
         // Tile type configuration
         this.tileTypes = {
-            default: 'tile37',     // Default tile type
-            obstacle: 'tile15',     // Default obstacle type
-            customTiles: new Map()  // Store custom tile types for specific positions
+            default: 'tile37',
+            obstacle: 'tile15'
         };
         
         // Add current selection state
         this.currentTileType = 37;
-        this.isPlacingObstacle = false;
         
         // Load spritesheet
         this.loadSprites();
         
-        // Load saved obstacles from localStorage
+        // Load saved layout from localStorage
         this.loadLayout('default');
         
         // Create sprite toggle button
@@ -96,77 +207,14 @@ class IsometricGrid {
     
     // Draw a single isometric tile
     drawTile(x, y, heightOffset = 0) {
-        const { x: screenX, y: screenY } = this.toScreen(x, y);
-        const isHovered = this.hoveredTile && this.hoveredTile.x === x && this.hoveredTile.y === y;
-        
-        if (this.sprites.isLoaded && this.useSprites) {
-            // Get tile type for this position
-            const tileType = this.getTileAtPosition(x, y);
-        
-            // Calculate sprite drawing position
-            const drawX = screenX - this.tileWidth / 2;
-            const drawY = screenY - this.tileHeight - heightOffset;
-            
-            // Draw the sprite from spritesheet
-            this.ctx.drawImage(
-                this.sprites.sheet,
-                tileType.x,                 // Source X in spritesheet
-                tileType.y,                 // Source Y in spritesheet
-                this.sprites.tileWidth,     // Source width
-                this.sprites.tileHeight,    // Source height
-                drawX,                      // Destination X
-                drawY,                      // Destination Y
-                this.tileWidth,             // Fixed destination width
-                this.tileHeight * 2         // Fixed destination height
-            );
-        } else {
-            // Draw geometric shape with height offset
-            this.ctx.beginPath();
-            this.ctx.moveTo(screenX, screenY - heightOffset);
-            this.ctx.lineTo(screenX + this.tileWidth / 2, screenY + this.tileHeight / 2 - heightOffset);
-            this.ctx.lineTo(screenX, screenY + this.tileHeight - heightOffset);
-            this.ctx.lineTo(screenX - this.tileWidth / 2, screenY + this.tileHeight / 2 - heightOffset);
-            this.ctx.closePath();
-            
-            // Fill tile with hover effect
-            const isObstacle = this.obstacles.has(`${x},${y}`);
-            let fillColor = isObstacle ? '#c0392b' : '#3498db';
-            let strokeColor = isObstacle ? '#922b21' : '#2980b9';
-            
-            if (isHovered) {
-                // Lighten the colors for hover effect
-                fillColor = isObstacle ? '#e74c3c' : '#5dade2';
-                strokeColor = isObstacle ? '#c0392b' : '#3498db';
-                
-                // Add glow effect
-                this.ctx.shadowColor = isObstacle ? 'rgba(231, 76, 60, 0.5)' : 'rgba(93, 173, 226, 0.5)';
-                this.ctx.shadowBlur = 10;
-            }
-            
-            this.ctx.fillStyle = fillColor;
-            this.ctx.fill();
-            
-            // Draw outline
-            this.ctx.strokeStyle = strokeColor;
-            this.ctx.lineWidth = isHovered ? 2 : 1;
-            this.ctx.stroke();
-            
-            // Reset shadow effects
-            this.ctx.shadowColor = 'transparent';
-            this.ctx.shadowBlur = 0;
-            this.ctx.lineWidth = 1;
-        }
-
-        if (this.debugMode) {
-            // Add coordinates text
-            this.ctx.fillStyle = 'white';
-            this.ctx.font = '12px Arial';
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
-            this.ctx.fillText(`${x},${y}`, screenX, screenY + this.tileHeight / 2 - heightOffset);
+        let tile = this.tiles.get(`${x},${y}`);
+        if (!tile) {
+            tile = new Tile(x, y, this.tileTypes.default);
+            this.tiles.set(tile.getKey(), tile);
         }
         
-        this.availableTiles.add(`${x},${y}`);
+        tile.setHeightOffset(heightOffset);
+        tile.draw(this.ctx, this.startX, this.startY, this.tileWidth, this.tileHeight, this.sprites, this.useSprites, this.debugMode);
     }
 
     drawTilePattern(nbRows, nbCols, startX, startY, heightOffset = 0) {
@@ -227,34 +275,41 @@ class IsometricGrid {
         const maxColumns = 23;
         const midPoint = Math.ceil(totalRows / 2);
     
-    // First half - expanding diamond with column limit
-    for (let i = 1; i <= midPoint; i++) {
-        // Calculate the width for this row (before applying limit)
-        const width = Math.min(i, Math.floor(maxColumns / 2));
-        
-        for (let j = -width; j <= width; j++) {
-            this.drawTile(i, j);
-        }
-    }
-    
-    // Second half - contracting diamond (only if there are more than midPoint rows)
-    if (totalRows > midPoint) {
-        const remainingRows = totalRows - midPoint;
-        for (let i = remainingRows; i >= 1; i--) {
-            // For the second half rows (midPoint+1 to totalRows)
-            const rowNum = totalRows - i + 1;
-            
+        // First half - expanding diamond with column limit
+        for (let i = 1; i <= midPoint; i++) {
             // Calculate the width for this row (before applying limit)
             const width = Math.min(i, Math.floor(maxColumns / 2));
             
             for (let j = -width; j <= width; j++) {
-                this.drawTile(rowNum, j);
+                // Create tile if it doesn't exist
+                const key = `${i},${j}`;
+                if (!this.tiles.has(key)) {
+                    this.tiles.set(key, new Tile(i, j, this.tileTypes.default));
+                }
+                this.drawTile(i, j);
             }
         }
-    }
-        
-        
-        
+    
+        // Second half - contracting diamond (only if there are more than midPoint rows)
+        if (totalRows > midPoint) {
+            const remainingRows = totalRows - midPoint;
+            for (let i = remainingRows; i >= 1; i--) {
+                // For the second half rows (midPoint+1 to totalRows)
+                const rowNum = totalRows - i + 1;
+                
+                // Calculate the width for this row (before applying limit)
+                const width = Math.min(i, Math.floor(maxColumns / 2));
+                
+                for (let j = -width; j <= width; j++) {
+                    // Create tile if it doesn't exist
+                    const key = `${rowNum},${j}`;
+                    if (!this.tiles.has(key)) {
+                        this.tiles.set(key, new Tile(rowNum, j, this.tileTypes.default));
+                    }
+                    this.drawTile(rowNum, j);
+                }
+            }
+        }
         
         // Draw debug visualization if debug mode is on
         if (this.debugMode) {
@@ -295,7 +350,28 @@ class IsometricGrid {
     updateHover(screenX, screenY) {
         this.debugInfo.mouseX = screenX;
         this.debugInfo.mouseY = screenY;
-        this.hoveredTile = this.toGrid(screenX, screenY);
+        
+        // Update previous hovered tile
+        if (this.hoveredTileKey) {
+            const prevTile = this.tiles.get(this.hoveredTileKey);
+            if (prevTile) {
+                prevTile.setHovered(false);
+            }
+        }
+        
+        // Get new hovered tile
+        const gridPos = this.toGrid(screenX, screenY);
+        this.hoveredTile = gridPos;
+        
+        // Update new hovered tile
+        const newTileKey = `${gridPos.x},${gridPos.y}`;
+        const newTile = this.tiles.get(newTileKey);
+        if (newTile) {
+            newTile.setHovered(true);
+            this.hoveredTileKey = newTileKey;
+        } else {
+            this.hoveredTileKey = null;
+        }
     }
 
     // Toggle debug mode
@@ -315,14 +391,16 @@ class IsometricGrid {
         return layouts ? JSON.parse(layouts) : ['default'];
     }
 
-    // Save current layout with a name
+    // Save current layout
     saveLayout(name) {
-        // Save current obstacles under the layout name
         const layoutKey = `isometricGridLayout_${name}`;
-        const obstaclesArray = Array.from(this.obstacles);
-        localStorage.setItem(layoutKey, JSON.stringify(obstaclesArray));
+        const tilesData = Array.from(this.tiles.entries()).map(([key, tile]) => ({
+            key,
+            tileType: tile.tileType,
+            isObstacle: tile.isObstacle
+        }));
+        localStorage.setItem(layoutKey, JSON.stringify(tilesData));
 
-        // Update layouts list
         const layouts = this.getLayouts();
         if (!layouts.includes(name)) {
             layouts.push(name);
@@ -335,13 +413,17 @@ class IsometricGrid {
     // Load a specific layout
     loadLayout(name) {
         const layoutKey = `isometricGridLayout_${name}`;
-        const savedObstacles = localStorage.getItem(layoutKey);
-        if (savedObstacles) {
-            const obstaclesArray = JSON.parse(savedObstacles);
-            this.obstacles = new Set(obstaclesArray);
-        } else {
-            this.obstacles = new Set();
+        const savedTiles = localStorage.getItem(layoutKey);
+        this.tiles.clear();
+        
+        if (savedTiles) {
+            const tilesData = JSON.parse(savedTiles);
+            tilesData.forEach(({key, tileType, isObstacle}) => {
+                const [x, y] = key.split(',').map(Number);
+                this.tiles.set(key, new Tile(x, y, tileType, isObstacle));
+            });
         }
+        
         this.currentLayout = name;
     }
 
@@ -391,57 +473,66 @@ class IsometricGrid {
     }
 
     addObstacle(x, y) {
-        this.obstacles.add(`${x},${y}`);
+        const key = `${x},${y}`;
+        let tile = this.tiles.get(key);
+        if (!tile) {
+            tile = new Tile(x, y, this.tileTypes.obstacle, true);
+        } else {
+            tile.setTileType(this.tileTypes.obstacle);
+            tile.isObstacle = true;
+        }
+        this.tiles.set(key, tile);
         this.saveObstacles();
     }
     
     removeObstacle(x, y) {
-        this.obstacles.delete(`${x},${y}`);
-        this.saveObstacles();
+        const key = `${x},${y}`;
+        let tile = this.tiles.get(key);
+        if (tile) {
+            tile.setTileType(this.tileTypes.default);
+            tile.isObstacle = false;
+            this.tiles.set(key, tile);
+            this.saveObstacles();
+        }
     }
     
     hasObstacle(x, y) {
-        return this.obstacles.has(`${x},${y}`);
+        const tile = this.tiles.get(`${x},${y}`);
+        return tile ? tile.isObstacle : false;
     }
     
     toggleObstacle(x, y) {
         const key = `${x},${y}`;
-        if (this.obstacles.has(key)) {
-            this.obstacles.delete(key);
-            this.saveObstacles();
-            return false; // Obstacle removed
+        let tile = this.tiles.get(key);
+        if (!tile) {
+            tile = new Tile(x, y, this.tileTypes.obstacle, true);
         } else {
-            this.obstacles.add(key);
-            this.saveObstacles();
-            return true; // Obstacle added
+            tile.isObstacle = !tile.isObstacle;
+            tile.setTileType(tile.isObstacle ? this.tileTypes.obstacle : this.tileTypes.default);
         }
+        this.tiles.set(key, tile);
+        this.saveObstacles();
+        return tile.isObstacle;
     }
 
     // Set tile type for a specific position
-    setTileAtPosition(x, y, tileIndex, isObstacle) {
+    setTileAtPosition(x, y, tileIndex, isObstacle = false) {
         const key = `${x},${y}`;
-        this.tileTypes.customTiles.set(key, {
-            tileIndex: `tile${tileIndex}`,
-            isObstacle: isObstacle
-        });
-        
-        if (isObstacle) {
-            this.obstacles.add(key);
+        let tile = this.tiles.get(key);
+        if (!tile) {
+            tile = new Tile(x, y, `tile${tileIndex}`, isObstacle);
         } else {
-            this.obstacles.delete(key);
+            tile.setTileType(`tile${tileIndex}`);
+            tile.isObstacle = isObstacle;
         }
-        
+        this.tiles.set(key, tile);
         this.saveObstacles();
     }
 
     // Get tile type for a specific position
     getTileAtPosition(x, y) {
-        const key = `${x},${y}`;
-        const customTile = this.tileTypes.customTiles.get(key);
-        if (customTile) {
-            return this.sprites.tiles[customTile.tileIndex];
-        }
-        return this.sprites.tiles[this.obstacles.has(key) ? this.tileTypes.obstacle : this.tileTypes.default];
+        const tile = this.tiles.get(`${x},${y}`);
+        return tile ? tile.tileType : this.tileTypes.default;
     }
 
     // Create sprite toggle button

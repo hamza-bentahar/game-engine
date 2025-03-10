@@ -22,6 +22,9 @@ class IsometricGame {
         this.isRightMouseDown = false;
         this.lastObstaclePos = null;
         
+        // Add isPlacingObstacle property to grid
+        this.grid.isPlacingObstacle = false;
+        
         // Bind methods
         this.render = this.render.bind(this);
         

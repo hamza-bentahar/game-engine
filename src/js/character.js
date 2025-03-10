@@ -41,17 +41,17 @@ class Character {
             const newY = y + dir.dy;
             const newPos = `${newX},${newY}`;
             
-            // Check if the new position is walkable and available
-            if (!this.grid.hasObstacle(newX, newY) && this.grid.availableTiles.has(newPos)) {
+            // Check if the new position is walkable and exists in the grid
+            if (!this.grid.hasObstacle(newX, newY) && this.grid.tiles.has(newPos)) {
                 // For diagonal movements, check if we can actually move there
                 if (Math.abs(dir.dx) === 1 && Math.abs(dir.dy) === 1) {
-                    // Check if both adjacent tiles are free and available
+                    // Check if both adjacent tiles are free and exist
                     const straightX = `${x + dir.dx},${y}`;
                     const straightY = `${x},${y + dir.dy}`;
                     const canMoveDiagonally = !this.grid.hasObstacle(x + dir.dx, y) && 
                                             !this.grid.hasObstacle(x, y + dir.dy) &&
-                                            this.grid.availableTiles.has(straightX) &&
-                                            this.grid.availableTiles.has(straightY);
+                                            this.grid.tiles.has(straightX) &&
+                                            this.grid.tiles.has(straightY);
                     
                     if (canMoveDiagonally) {
                         neighbors.push({x: newX, y: newY});
@@ -137,9 +137,9 @@ class Character {
     }
 
     moveTo(targetX, targetY) {
-        // If target is an obstacle or not available, don't even try
+        // If target is an obstacle or not in the grid, don't even try
         const targetPos = `${targetX},${targetY}`;
-        if (this.grid.hasObstacle(targetX, targetY) || !this.grid.availableTiles.has(targetPos)) {
+        if (this.grid.hasObstacle(targetX, targetY) || !this.grid.tiles.has(targetPos)) {
             return;
         }
 
