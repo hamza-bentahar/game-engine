@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loop Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+        }
+        #output {
+            white-space: pre;
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="runOriginalLoop()">Run Original Loop</button>
+        <button onclick="runModifiedLoop()">Run Modified Loop</button>
+        <button onclick="clearOutput()">Clear</button>
+    </div>
+    <div id="output"></div>
+
+    <script>     
+        console.log("Hello World")
+        for (j = -1; j >= -8; j--) {
+            for (i = 1; i <= 8; i++) {
+                console.log(`Coordinate (${i}, ${j})`);
+            }
+        }
+    </script>
+</body>
+</html> 
