@@ -1,11 +1,12 @@
 class Tile {
-    constructor(x, y, tileType = 'default', isObstacle = false) {
+    constructor(x, y, tileType = 'default', isObstacle = false, nextGrid = null) {
         this.x = x;
         this.y = y;
         this.tileType = tileType;
         this.isObstacle = isObstacle;
         this.heightOffset = 0;
         this.isHovered = false;
+        this.nextGrid = nextGrid;
     }
 
     // Convert tile coordinates to screen coordinates
@@ -27,6 +28,12 @@ class Tile {
             const drawX = screenX - tileWidth / 2;
             const drawY = screenY - tileHeight - this.heightOffset;
             
+            // Add a glow effect for tiles with nextGrid
+            if (this.nextGrid !== null) {
+                ctx.shadowColor = 'rgba(255, 255, 0, 0.7)';
+                ctx.shadowBlur = 15;
+            }
+            
             ctx.drawImage(
                 sprites.sheet,
                 tileSprite.x,
@@ -38,6 +45,10 @@ class Tile {
                 tileWidth,
                 tileHeight * 2
             );
+            
+            // Reset shadow effects after drawing
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
         } else {
             // Draw geometric shape
             ctx.beginPath();
@@ -47,17 +58,36 @@ class Tile {
             ctx.lineTo(screenX - tileWidth / 2, screenY + tileHeight / 2 - this.heightOffset);
             ctx.closePath();
             
-            // Fill tile with hover effect
-            let fillColor = this.isObstacle ? '#c0392b' : '#3498db';
-            let strokeColor = this.isObstacle ? '#922b21' : '#2980b9';
+            // Determine fill and stroke colors based on tile properties
+            let fillColor;
+            let strokeColor;
+            
+            if (this.nextGrid !== null) {
+                // Yellow colors for tiles with nextGrid
+                fillColor = '#f1c40f';  // Yellow
+                strokeColor = '#d4ac0d'; // Darker yellow
+            } else {
+                // Original colors
+                fillColor = this.isObstacle ? '#c0392b' : '#3498db';
+                strokeColor = this.isObstacle ? '#922b21' : '#2980b9';
+            }
             
             if (this.isHovered) {
                 // Lighten the colors for hover effect
-                fillColor = this.isObstacle ? '#e74c3c' : '#5dade2';
-                strokeColor = this.isObstacle ? '#c0392b' : '#3498db';
+                if (this.nextGrid !== null) {
+                    fillColor = '#f9e79f'; // Lighter yellow
+                    strokeColor = '#f1c40f'; // Yellow
+                } else {
+                    fillColor = this.isObstacle ? '#e74c3c' : '#5dade2';
+                    strokeColor = this.isObstacle ? '#c0392b' : '#3498db';
+                }
                 
                 // Add glow effect
-                ctx.shadowColor = this.isObstacle ? 'rgba(231, 76, 60, 0.5)' : 'rgba(93, 173, 226, 0.5)';
+                if (this.nextGrid !== null) {
+                    ctx.shadowColor = 'rgba(241, 196, 15, 0.7)'; // Yellow glow
+                } else {
+                    ctx.shadowColor = this.isObstacle ? 'rgba(231, 76, 60, 0.5)' : 'rgba(93, 173, 226, 0.5)';
+                }
                 ctx.shadowBlur = 10;
             }
             
@@ -81,7 +111,7 @@ class Tile {
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`${this.x},${this.y}`, screenX, screenY + tileHeight / 2 - this.heightOffset);
+            ctx.fillText(`${this.x},${this.y},${this.nextGrid}`, screenX, screenY + tileHeight / 2 - this.heightOffset);
         }
     }
 

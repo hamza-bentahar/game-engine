@@ -36,6 +36,9 @@ class IsometricGrid {
         // Add hovered tile tracking
         this.hoveredTileKey = null;
         
+        // Add selected tile for nextGrid editing
+        this.selectedTileKey = null;
+        
         // Spritesheet configuration
         this.sprites = {
             sheet: null,
@@ -51,7 +54,8 @@ class IsometricGrid {
                 const tileIndex = row * 11 + col;
                 this.sprites.tiles[`tile${tileIndex}`] = {
                     x: col * this.sprites.tileWidth,
-                    y: row * this.sprites.tileHeight
+                    y: row * this.sprites.tileHeight,
+                    isObstacle: false
                 };
             }
         }
@@ -97,26 +101,50 @@ class IsometricGrid {
     drawTile(x, y, heightOffset = 0) {
         let tile = this.tiles.get(`${x},${y}`);
         if (!tile) {
-            tile = new Tile(x, y, this.tileTypes.default);
-            this.tiles.set(tile.getKey(), tile);
+            tile = new Tile(x, y, this.tileTypes.default, false, null);
+            this.tiles.set(`${x},${y}`, tile);
         }
         
         tile.setHeightOffset(heightOffset);
         tile.draw(this.ctx, this.startX, this.startY, this.tileWidth, this.tileHeight, this.sprites, this.useSprites, this.debugMode);
     }
 
-    drawTilePattern(nbRows, nbCols, startX, startY, heightOffset = 0) {
-        // Loop through rows
-        for (let row = 0; row < nbRows + 1; row++) {
-            // Calculate starting position for this row
-            let rowStartX = startX + row;
-            let rowStartY = startY + row;
+    drawTilePattern(totalRows, maxColumns, heightOffset = 0) {
+        const midPoint = Math.ceil(totalRows / 2);
+    
+        // First half - expanding diamond with column limit
+        for (let i = 0; i <= midPoint; i++) {
+            // Calculate the width for this row (before applying limit)
+            const width = Math.min(i, Math.floor(maxColumns / 2));
             
-            // Draw tiles in each row
-            for (let tile = 0; tile <= nbCols; tile++) {
-                let x = rowStartX + tile;
-                let y = rowStartY - tile;
-                this.drawTile(x, y, heightOffset);
+            for (let j = -width; j <= width; j++) {
+                // Create tile if it doesn't exist
+                const key = `${i},${j}`;
+                if (!this.tiles.has(key)) {
+                    this.tiles.set(key, new Tile(i, j, this.tileTypes.default, false, null));
+                }
+                this.drawTile(i, j);
+            }
+        }
+    
+        // Second half - contracting diamond (only if there are more than midPoint rows)
+        if (totalRows > midPoint) {
+            const remainingRows = totalRows - midPoint;
+            for (let i = remainingRows; i >= 0; i--) {
+                // For the second half rows (midPoint+1 to totalRows)
+                const rowNum = totalRows - i + 1;
+                
+                // Calculate the width for this row (before applying limit)
+                const width = Math.min(i, Math.floor(maxColumns / 2));
+                
+                for (let j = -width; j <= width; j++) {
+                    // Create tile if it doesn't exist
+                    const key = `${rowNum},${j}`;
+                    if (!this.tiles.has(key)) {
+                        this.tiles.set(key, new Tile(rowNum, j, this.tileTypes.default, false, null));
+                    }
+                    this.drawTile(rowNum, j);
+                }
             }
         }
     }
@@ -148,9 +176,15 @@ class IsometricGrid {
         // Show screen coordinates
         this.ctx.fillText(`Screen: (${Math.round(mouseX)}, ${Math.round(mouseY)})`, mouseX + 15, mouseY);
         
-        // Show calculated grid coordinates
+        // Show calculated grid coordinates and nextGrid if available
         if (this.hoveredTile) {
             this.ctx.fillText(`Grid: (${this.hoveredTile.x}, ${this.hoveredTile.y})`, mouseX + 15, mouseY + 15);
+            
+            // Show nextGrid value if it exists
+            const nextGrid = this.getNextGrid(this.hoveredTile.x, this.hoveredTile.y);
+            if (nextGrid) {
+                this.ctx.fillText(`Next Grid: ${nextGrid}`, mouseX + 15, mouseY + 30);
+            }
         }
     }
     
@@ -161,43 +195,8 @@ class IsometricGrid {
 
         const totalRows = 23;
         const maxColumns = 23;
-        const midPoint = Math.ceil(totalRows / 2);
-    
-        // First half - expanding diamond with column limit
-        for (let i = 1; i <= midPoint; i++) {
-            // Calculate the width for this row (before applying limit)
-            const width = Math.min(i, Math.floor(maxColumns / 2));
-            
-            for (let j = -width; j <= width; j++) {
-                // Create tile if it doesn't exist
-                const key = `${i},${j}`;
-                if (!this.tiles.has(key)) {
-                    this.tiles.set(key, new Tile(i, j, this.tileTypes.default));
-                }
-                this.drawTile(i, j);
-            }
-        }
-    
-        // Second half - contracting diamond (only if there are more than midPoint rows)
-        if (totalRows > midPoint) {
-            const remainingRows = totalRows - midPoint;
-            for (let i = remainingRows; i >= 1; i--) {
-                // For the second half rows (midPoint+1 to totalRows)
-                const rowNum = totalRows - i + 1;
-                
-                // Calculate the width for this row (before applying limit)
-                const width = Math.min(i, Math.floor(maxColumns / 2));
-                
-                for (let j = -width; j <= width; j++) {
-                    // Create tile if it doesn't exist
-                    const key = `${rowNum},${j}`;
-                    if (!this.tiles.has(key)) {
-                        this.tiles.set(key, new Tile(rowNum, j, this.tileTypes.default));
-                    }
-                    this.drawTile(rowNum, j);
-                }
-            }
-        }
+
+        this.drawTilePattern(totalRows, maxColumns);
         
         // Draw debug visualization if debug mode is on
         if (this.debugMode) {
@@ -257,8 +256,79 @@ class IsometricGrid {
         if (newTile) {
             newTile.setHovered(true);
             this.hoveredTileKey = newTileKey;
+            
+            // Show visual indicator for nextGrid if available
+            const nextGrid = this.getNextGrid(gridPos.x, gridPos.y);
+            if (nextGrid) {
+                // Display a small arrow or indicator for tiles with nextGrid
+                const indicatorElement = document.getElementById('nextgrid-indicator');
+                if (!indicatorElement) {
+                    const newIndicator = document.createElement('div');
+                    newIndicator.id = 'nextgrid-indicator';
+                    newIndicator.style.position = 'absolute';
+                    newIndicator.style.fontSize = '12px';
+                    newIndicator.style.color = 'yellow';
+                    newIndicator.style.textShadow = '0 0 3px black';
+                    newIndicator.style.pointerEvents = 'none';
+                    newIndicator.style.zIndex = '9999';
+                    document.body.appendChild(newIndicator);
+                }
+                
+                const indicator = document.getElementById('nextgrid-indicator');
+                // Get the screen coordinates of the tile
+                const tilePos = this.toScreen(gridPos.x, gridPos.y);
+                indicator.style.left = `${tilePos.x}px`;
+                indicator.style.top = `${tilePos.y - 20}px`; // Position above the tile
+                indicator.textContent = `→ ${nextGrid}`;
+                indicator.style.display = 'block';
+            } else {
+                // Hide the indicator if no nextGrid
+                const indicator = document.getElementById('nextgrid-indicator');
+                if (indicator) {
+                    indicator.style.display = 'none';
+                }
+            }
+            
+            if (this.hoveredTile.isRight) {
+                console.log('hovered right tile');
+                // Display a big arrow pointing to the right at the tile position
+                const arrowElement = document.createElement('div');
+                arrowElement.textContent = '➡️';
+                arrowElement.style.position = 'absolute';
+                
+                // Get the screen coordinates of the tile
+                const tilePos = this.toScreen(gridPos.x, gridPos.y);
+                arrowElement.style.left = `${tilePos.x}px`;
+                arrowElement.style.top = `${tilePos.y - 40}px`; // Position slightly above the tile
+                
+                arrowElement.style.fontSize = '40px';
+                arrowElement.style.color = 'white';
+                arrowElement.style.textShadow = '0 0 10px black';
+                arrowElement.style.zIndex = '9999';
+                arrowElement.style.pointerEvents = 'none'; // Make it non-interactive
+                
+                // Remove any existing arrows first
+                const existingArrow = document.getElementById('direction-arrow');
+                if (existingArrow) {
+                    existingArrow.remove();
+                }
+                
+                arrowElement.id = 'direction-arrow';
+                document.body.appendChild(arrowElement);
+            } else {
+                const existingArrow = document.getElementById('direction-arrow');
+                if (existingArrow) {
+                    existingArrow.remove();
+                }
+            }
         } else {
             this.hoveredTileKey = null;
+            
+            // Hide the nextGrid indicator
+            const indicator = document.getElementById('nextgrid-indicator');
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
         }
     }
 
@@ -270,6 +340,18 @@ class IsometricGrid {
     // Toggle edit mode
     toggleEditMode() {
         this.editMode = !this.editMode;
+        
+        // Reset selected tile when exiting edit mode
+        if (!this.editMode) {
+            this.selectedTileKey = null;
+            
+            // Hide the selected tile indicator
+            const indicator = document.getElementById('selected-tile-indicator');
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }
+        
         return this.editMode;
     }
 
@@ -285,7 +367,8 @@ class IsometricGrid {
         const tilesData = Array.from(this.tiles.entries()).map(([key, tile]) => ({
             key,
             tileType: tile.tileType,
-            isObstacle: tile.isObstacle
+            isObstacle: tile.isObstacle,
+            nextGrid: tile.nextGrid
         }));
         localStorage.setItem(layoutKey, JSON.stringify(tilesData));
 
@@ -306,13 +389,37 @@ class IsometricGrid {
         
         if (savedTiles) {
             const tilesData = JSON.parse(savedTiles);
-            tilesData.forEach(({key, tileType, isObstacle}) => {
+            tilesData.forEach(({key, tileType, isObstacle, nextGrid}) => {
                 const [x, y] = key.split(',').map(Number);
-                this.tiles.set(key, new Tile(x, y, tileType, isObstacle));
+                this.tiles.set(key, new Tile(x, y, tileType, isObstacle, nextGrid));
             });
+        } else {
+            // If the layout doesn't exist, create a new empty layout
+            console.log(`Creating new layout: ${name}`);
+            this.createEmptyLayout(name);
         }
         
         this.currentLayout = name;
+    }
+
+    // Create a new empty layout
+    createEmptyLayout(name) {
+        // Create a basic grid pattern
+        const totalRows = 11;
+        const maxColumns = 11;
+        
+        // Create a diamond pattern of tiles
+        for (let i = 0; i <= totalRows; i++) {
+            const width = Math.min(i, Math.floor(maxColumns / 2));
+            
+            for (let j = -width; j <= width; j++) {
+                const key = `${i},${j}`;
+                this.tiles.set(key, new Tile(i, j, this.tileTypes.default, false, null));
+            }
+        }
+        
+        // Save the new layout
+        this.saveLayout(name);
     }
 
     // Delete a layout
@@ -364,7 +471,7 @@ class IsometricGrid {
         const key = `${x},${y}`;
         let tile = this.tiles.get(key);
         if (!tile) {
-            tile = new Tile(x, y, this.tileTypes.obstacle, true);
+            tile = new Tile(x, y, this.tileTypes.obstacle, true, null);
         } else {
             tile.setTileType(this.tileTypes.obstacle);
             tile.isObstacle = true;
@@ -393,7 +500,7 @@ class IsometricGrid {
         const key = `${x},${y}`;
         let tile = this.tiles.get(key);
         if (!tile) {
-            tile = new Tile(x, y, this.tileTypes.obstacle, true);
+            tile = new Tile(x, y, this.tileTypes.obstacle, true, null);
         } else {
             tile.isObstacle = !tile.isObstacle;
             tile.setTileType(tile.isObstacle ? this.tileTypes.obstacle : this.tileTypes.default);
@@ -408,7 +515,7 @@ class IsometricGrid {
         const key = `${x},${y}`;
         let tile = this.tiles.get(key);
         if (!tile) {
-            tile = new Tile(x, y, `tile${tileIndex}`, isObstacle);
+            tile = new Tile(x, y, `tile${tileIndex}`, isObstacle, null);
         } else {
             tile.setTileType(`tile${tileIndex}`);
             tile.isObstacle = isObstacle;
@@ -443,6 +550,32 @@ class IsometricGrid {
         });
         
         document.body.appendChild(button);
+    }
+
+    // Set the nextGrid property for a specific position
+    setNextGrid(x, y, nextGridValue) {
+        const key = `${x},${y}`;
+        let tile = this.tiles.get(key);
+        if (!tile) {
+            tile = new Tile(x, y, this.tileTypes.default, false, nextGridValue);
+        } else {
+            tile.nextGrid = nextGridValue;
+        }
+        this.tiles.set(key, tile);
+        this.saveObstacles();
+    }
+
+    // Get the nextGrid property for a specific position
+    getNextGrid(x, y) {
+        const tile = this.tiles.get(`${x},${y}`);
+        return tile ? tile.nextGrid : null;
+    }
+
+    // Set tile type for default or obstacle
+    setTileType(tileTypeKey, tileIndex) {
+        if (tileTypeKey === 'default' || tileTypeKey === 'obstacle') {
+            this.tileTypes[tileTypeKey] = `tile${tileIndex}`;
+        }
     }
 }
 

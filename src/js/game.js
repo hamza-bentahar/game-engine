@@ -3,7 +3,7 @@ import { IsometricGrid } from './grid.js';
 import { ControlPanel } from './controlPanel.js';
 
 class IsometricGame {
-    constructor() {
+    constructor(characterType = 'mage', characterName = 'Adventurer') {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         
@@ -11,10 +11,10 @@ class IsometricGame {
         this.updateCanvasSize();
         
         // Create grid
-        this.grid = new IsometricGrid(this.canvas, 12, 11);
+        this.grid = new IsometricGrid(this.canvas, 6, 6);
         
-        // Create character
-        this.character = new Character(this.grid);
+        // Create character with selected type and name
+        this.character = new Character(this.grid, characterType, characterName);
         
         // Create control panel
         this.createControlPanel();
@@ -28,40 +28,18 @@ class IsometricGame {
         
         // Bind methods
         this.render = this.render.bind(this);
+        this.handleClick = this.handleClick.bind(this);
+        this.handleMouseDown = this.handleMouseDown.bind(this);
+        this.handleMouseMove = this.handleMouseMove.bind(this);
         
-        // Add click handler for character movement (left click)
-        this.canvas.addEventListener('click', this.handleClick.bind(this));
+        // Add click handler for character movement and nextGrid selection (left click)
+        this.canvas.addEventListener('click', this.handleClick);
+        
+        // Add mousedown handler for tile placement (both left and right click)
+        this.canvas.addEventListener('mousedown', this.handleMouseDown);
         
         // Add mousemove handler
-        this.canvas.addEventListener('mousemove', (event) => {
-            const rect = this.canvas.getBoundingClientRect();
-            const mouseX = event.clientX - rect.left;
-            const mouseY = event.clientY - rect.top;
-            
-            this.grid.updateHover(mouseX, mouseY);
-            
-            // Handle obstacle creation while dragging
-            if (this.isRightMouseDown && this.grid.editMode) {
-                const gridPos = this.grid.toGrid(mouseX, mouseY);
-                this.tryCreateObstacle(gridPos);
-            }
-        });
-        
-        // Add mousedown handler
-        this.canvas.addEventListener('mousedown', (event) => {
-            if (event.button === 2) { // Right mouse button
-                event.preventDefault();
-                this.isRightMouseDown = true;
-                
-                if (this.grid.editMode) {
-                    const rect = this.canvas.getBoundingClientRect();
-                    const mouseX = event.clientX - rect.left;
-                    const mouseY = event.clientY - rect.top;
-                    const gridPos = this.grid.toGrid(mouseX, mouseY);
-                    this.tryCreateObstacle(gridPos);
-                }
-            }
-        });
+        this.canvas.addEventListener('mousemove', this.handleMouseMove);
         
         // Add mouseup handler
         this.canvas.addEventListener('mouseup', (event) => {
@@ -109,8 +87,8 @@ class IsometricGame {
     }
     
     updateCanvasSize() {
-        const maxWidth = window.innerWidth * 0.89;
-        const maxHeight = window.innerHeight * 0.7; // Changed from 0.8 to 0.6 (60% of window height)
+        const maxWidth = window.innerWidth * 1;
+        const maxHeight = window.innerHeight * 0.70; // Changed from 0.8 to 0.6 (60% of window height)
         
         // Calculate dimensions maintaining 16:9 ratio
         const targetRatio = 16 / 9;
@@ -132,21 +110,94 @@ class IsometricGame {
         this.canvas.style.top = '20px';
     }
     
-    handleClick(event) {
+    // Handle mousedown for tile placement
+    handleMouseDown(event) {
+        // Only handle tile placement in edit mode
+        if (!this.grid.editMode) return;
+        
         const rect = this.canvas.getBoundingClientRect();
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
-        
         const gridPos = this.grid.toGrid(mouseX, mouseY);
-        this.character.moveTo(gridPos.x, gridPos.y);
+        
+        // Handle right-click for tile placement
+        if (event.button === 2) { // Right mouse button
+            event.preventDefault();
+            this.isRightMouseDown = true;
+            this.tryCreateObstacle(gridPos);
+        }
+        // Handle left-click for tile placement
+        else if (event.button === 0) { // Left mouse button
+            this.tryCreateObstacle(gridPos);
+        }
     }
     
+    // Handle mouse movement
     handleMouseMove(event) {
         const rect = this.canvas.getBoundingClientRect();
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
         
         this.grid.updateHover(mouseX, mouseY);
+        
+        // Handle obstacle creation while dragging
+        if (this.isRightMouseDown && this.grid.editMode) {
+            const gridPos = this.grid.toGrid(mouseX, mouseY);
+            this.tryCreateObstacle(gridPos);
+        }
+    }
+    
+    // Handle click for character movement and nextGrid selection
+    handleClick(event) {
+        const rect = this.canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+        
+        const gridPos = this.grid.toGrid(mouseX, mouseY);
+        
+        // If in edit mode, select the tile for nextGrid editing
+        if (this.grid.editMode) {
+            // Update the selected tile
+            if (this.grid.selectedTileKey) {
+                const prevTile = this.grid.tiles.get(this.grid.selectedTileKey);
+                if (prevTile) {
+                    // Reset any visual indicators for the previously selected tile
+                }
+            }
+            
+            // Set the new selected tile
+            this.grid.selectedTileKey = `${gridPos.x},${gridPos.y}`;
+            
+            // Show a visual indicator for the selected tile
+            const selectedIndicator = document.getElementById('selected-tile-indicator');
+            if (!selectedIndicator) {
+                const newIndicator = document.createElement('div');
+                newIndicator.id = 'selected-tile-indicator';
+                newIndicator.style.position = 'absolute';
+                newIndicator.style.fontSize = '16px';
+                newIndicator.style.color = '#f1c40f'; // Yellow
+                newIndicator.style.textShadow = '0 0 5px black';
+                newIndicator.style.pointerEvents = 'none';
+                newIndicator.style.zIndex = '9998';
+                document.body.appendChild(newIndicator);
+            }
+            
+            const indicator = document.getElementById('selected-tile-indicator');
+            const tilePos = this.grid.toScreen(gridPos.x, gridPos.y);
+            indicator.style.left = `${tilePos.x}px`;
+            indicator.style.top = `${tilePos.y - 30}px`;
+            indicator.textContent = '⬇️';
+            indicator.style.display = 'block';
+        } else {
+            // In game mode, move the character
+            this.character.moveTo(gridPos.x, gridPos.y);
+            
+            // Hide the selected tile indicator
+            const indicator = document.getElementById('selected-tile-indicator');
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }
     }
     
     // Main render loop

@@ -1,16 +1,51 @@
 class Character {
-    constructor(grid) {
+    constructor(grid, characterType = 'mage', characterName = 'Adventurer') {
         this.grid = grid;
         this.x = 0;
         this.y = 0;
         this.targetX = 0;
         this.targetY = 0;
         this.isMoving = false;
-        this.moveSpeed = 0.1; // Base speed
+        this.moveSpeed = 0.05; // Base speed
         this.minSpeed = 0.01;
         this.maxSpeed = 0.5;
         this.speedStep = 0.01;
         this.path = []; // Store the path
+        this.currentResizeHandler = null; // Store the current resize handler
+
+        // Character info
+        this.characterType = characterType;
+        this.name = characterName;
+
+        // Animation properties
+        this.currentAnimation = 'idle';
+        this.currentDirection = 'down';
+        this.animationFrame = 0;
+        this.animationTimer = 0;
+        this.lastTime = 0;
+        this.spriteSheet = new Image();
+        this.spriteSheet.src = `assets/${this.characterType}_sprites.png`;
+        this.spriteWidth = 64;
+        this.spriteHeight = 64;
+        this.scale = 2.5;
+        this.verticalOffset = 32;
+
+        // Animation frames mapping (based on standard LPC spritesheet format)
+        this.animations = {
+            // Format: [startX, startY, frames, frameDuration]
+            'idle': {
+                'down':  [0, 0, 1, 100],
+                'left':  [0, 1, 1, 100],
+                'right': [0, 2, 1, 100],
+                'up':    [0, 3, 1, 100]
+            },
+            'walk': {
+                'down':  [0, 10, 8, 120],
+                'left':  [0, 9, 8, 120],
+                'right': [0, 11, 8, 120],
+                'up':    [0, 8, 8, 120]
+            }
+        };
     }
 
     // Adjust movement speed
@@ -155,32 +190,202 @@ class Character {
     }
 
     update() {
-        if (!this.isMoving) return;
-
-        const dx = this.targetX - this.x;
-        const dy = this.targetY - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < this.moveSpeed) {
-            this.x = this.targetX;
-            this.y = this.targetY;
-            
-            // Remove the current target from path
-            this.path.shift();
-            
-            // If there are more points in the path, move to the next one
-            if (this.path.length > 0) {
-                this.targetX = this.path[0].x;
-                this.targetY = this.path[0].y;
-            } else {
-                this.isMoving = false;
-            }
-            return;
+        if (!this.isMoving) {
+            this.setAnimation('idle', this.currentDirection);
         }
 
-        const angle = Math.atan2(dy, dx);
-        this.x += Math.cos(angle) * this.moveSpeed;
-        this.y += Math.sin(angle) * this.moveSpeed;
+        if (this.isMoving) {
+            const dx = this.targetX - this.x;
+            const dy = this.targetY - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Update direction based on movement
+            if (Math.abs(dx) > Math.abs(dy)) {
+                this.currentDirection = dx > 0 ? 'right' : 'left';
+            } else {
+                this.currentDirection = dy > 0 ? 'down' : 'up';
+            }
+            this.setAnimation('walk', this.currentDirection);
+
+            if (distance < this.moveSpeed) {
+                this.x = this.targetX;
+                this.y = this.targetY;
+                
+                this.path.shift();
+                
+                if (this.path.length > 0) {
+                    this.targetX = this.path[0].x;
+                    this.targetY = this.path[0].y;
+                } else {
+                    this.isMoving = false;
+                    this.setAnimation('idle', this.currentDirection);
+                    
+                    const nextGrid = this.grid.getNextGrid(Math.round(this.x), Math.round(this.y));
+                    
+                    if (nextGrid) {
+                        console.log(`Loading next grid: ${nextGrid}`);
+                        this.currentResizeHandler = this.createTransitionEffect(() => {
+                            const layoutName = nextGrid;
+                            this.grid.loadLayout(layoutName);
+                            this.x = 0;
+                            this.y = 0;
+                            this.targetX = 0;
+                            this.targetY = 0;
+                            this.fadeInAfterTransition();
+                        });
+                    }
+                }
+                return;
+            }
+
+            const angle = Math.atan2(dy, dx);
+            this.x += Math.cos(angle) * this.moveSpeed;
+            this.y += Math.sin(angle) * this.moveSpeed;
+        }
+
+        // Update animation
+        const currentTime = performance.now();
+        if (!this.lastTime) this.lastTime = currentTime;
+        const deltaTime = currentTime - this.lastTime;
+        this.lastTime = currentTime;
+
+        this.animationTimer += deltaTime;
+        const currentAnim = this.animations[this.currentAnimation][this.currentDirection];
+        
+        if (this.animationTimer >= currentAnim[3]) {
+            this.animationFrame = (this.animationFrame + 1) % currentAnim[2];
+            this.animationTimer = 0;
+        }
+    }
+
+    setAnimation(animName, direction) {
+        if (this.currentAnimation === animName && this.currentDirection === direction) {
+            return;
+        }
+        this.currentAnimation = animName;
+        this.currentDirection = direction;
+        this.animationFrame = 0;
+        this.animationTimer = 0;
+    }
+
+    // Create a transition effect when loading a new grid
+    createTransitionEffect(callback) {
+        // Create an overlay that matches the canvas size and position
+        const canvas = this.grid.canvas;
+        const canvasRect = canvas.getBoundingClientRect();
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'grid-transition-overlay';
+        overlay.style.position = 'absolute';
+        overlay.style.top = `${canvasRect.top}px`;
+        overlay.style.left = `${canvasRect.left}px`;
+        overlay.style.width = `${canvasRect.width}px`;
+        overlay.style.height = `${canvasRect.height}px`;
+        overlay.style.backgroundColor = 'black';
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.5s ease-in-out';
+        overlay.style.zIndex = '9999'; // Just above the canvas but below other UI
+        overlay.style.pointerEvents = 'none';
+        
+        document.body.appendChild(overlay);
+        
+        // Add resize listener to keep the overlay positioned correctly
+        const updateOverlayPosition = () => {
+            const updatedRect = canvas.getBoundingClientRect();
+            overlay.style.top = `${updatedRect.top}px`;
+            overlay.style.left = `${updatedRect.left}px`;
+            overlay.style.width = `${updatedRect.width}px`;
+            overlay.style.height = `${updatedRect.height}px`;
+        };
+        
+        window.addEventListener('resize', updateOverlayPosition);
+        
+        // Fade in the overlay
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+            
+            // Execute the callback after the fade-in completes
+            setTimeout(() => {
+                callback();
+                
+                // Don't remove the overlay here, it will be faded out in fadeInAfterTransition
+            }, 500);
+        }, 10);
+        
+        // Return the resize handler so it can be removed later
+        return updateOverlayPosition;
+    }
+    
+    // Fade back in after the transition
+    fadeInAfterTransition() {
+        const overlay = document.getElementById('grid-transition-overlay');
+        if (overlay) {
+            // Remove the resize event listener
+            window.removeEventListener('resize', this.currentResizeHandler);
+            this.currentResizeHandler = null;
+            
+            // Fade out the overlay
+            overlay.style.opacity = '0';
+            
+            // Remove the overlay after the fade-out completes
+            setTimeout(() => {
+                overlay.remove();
+                
+                // Show a notification about the new grid
+                this.showGridChangeNotification(this.grid.currentLayout);
+            }, 500);
+        }
+    }
+    
+    // Show a notification when the grid changes
+    showGridChangeNotification(layoutName) {
+        // Get canvas position for positioning the notification
+        const canvas = this.grid.canvas;
+        const canvasRect = canvas.getBoundingClientRect();
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.id = 'grid-change-notification';
+        notification.style.position = 'absolute';
+        notification.style.top = `${canvasRect.top + 20}px`;
+        notification.style.left = `${canvasRect.left + (canvasRect.width / 2)}px`;
+        notification.style.transform = 'translateX(-50%)';
+        notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        notification.style.color = 'white';
+        notification.style.padding = '10px 20px';
+        notification.style.borderRadius = '5px';
+        notification.style.fontFamily = 'Arial, sans-serif';
+        notification.style.fontSize = '16px';
+        notification.style.zIndex = '10000';
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s ease-in-out';
+        notification.textContent = `Entered new area: ${layoutName}`;
+        
+        document.body.appendChild(notification);
+        
+        // Add resize listener to keep the notification positioned correctly
+        const updateNotificationPosition = () => {
+            const updatedRect = canvas.getBoundingClientRect();
+            notification.style.top = `${updatedRect.top + 20}px`;
+            notification.style.left = `${updatedRect.left + (updatedRect.width / 2)}px`;
+        };
+        
+        window.addEventListener('resize', updateNotificationPosition);
+        
+        // Fade in
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            
+            // Fade out and remove after a few seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    // Remove the resize event listener
+                    window.removeEventListener('resize', updateNotificationPosition);
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }, 10);
     }
 
     draw(ctx) {
@@ -190,11 +395,9 @@ class Character {
             ctx.strokeStyle = '#27ae60';
             ctx.lineWidth = 2;
             
-            // Start from current position
             const start = this.grid.toScreen(this.x, this.y);
             ctx.moveTo(start.x, start.y + this.grid.tileHeight / 2);
             
-            // Draw lines through all path points
             for (const point of this.path) {
                 const screen = this.grid.toScreen(point.x, point.y);
                 ctx.lineTo(screen.x, screen.y + this.grid.tileHeight / 2);
@@ -202,14 +405,40 @@ class Character {
             ctx.stroke();
         }
 
-        // Draw character
+        // Draw character sprite
         const { x: screenX, y: screenY } = this.grid.toScreen(this.x, this.y);
-        ctx.beginPath();
-        ctx.arc(screenX, screenY + this.grid.tileHeight / 2, this.grid.tileHeight / 2, 0, Math.PI * 2);
-        ctx.fillStyle = '#e74c3c';
-        ctx.fill();
-        ctx.strokeStyle = '#c0392b';
-        ctx.stroke();
+        const currentAnim = this.animations[this.currentAnimation][this.currentDirection];
+        const frameX = (currentAnim[0] + this.animationFrame) * this.spriteWidth;
+        const frameY = currentAnim[1] * this.spriteHeight;
+
+        // Calculate position to center the sprite on the isometric tile
+        const scaledWidth = this.spriteWidth * this.scale;
+        const scaledHeight = this.spriteHeight * this.scale;
+        const drawX = screenX - scaledWidth / 2;
+        const drawY = screenY - scaledHeight + this.verticalOffset;
+
+        ctx.drawImage(
+            this.spriteSheet,
+            frameX,
+            frameY,
+            this.spriteWidth,
+            this.spriteHeight,
+            drawX,
+            drawY,
+            scaledWidth,
+            scaledHeight
+        );
+
+        // Draw character name above the sprite
+        ctx.font = '16px Arial';
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 3;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        const nameY = drawY - 10;
+        ctx.strokeText(this.name, screenX, nameY);
+        ctx.fillText(this.name, screenX, nameY);
 
         // Draw speed indicator only in debug mode
         if (this.grid.debugMode) {

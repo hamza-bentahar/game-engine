@@ -3,43 +3,332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loop Test</title>
+    <title>Character Animation with LPC Spritesheet</title>
     <style>
         body {
-            font-family: monospace;
-            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
         }
-        #output {
-            white-space: pre;
-            background: #f0f0f0;
-            padding: 20px;
-            border-radius: 5px;
-            margin-top: 20px;
+
+        .game-container {
+            position: relative;
+            width: 400px;
+            height: 300px;
+            background-color: #8fbc8f;
+            border: 2px solid #2e8b57;
+            overflow: hidden;
         }
+
+        .character {
+            position: absolute;
+            width: 64px;
+            height: 64px;
+            background-image: url('assets/mage_sprites.png');
+            background-repeat: no-repeat;
+            transform: scale(1.5);
+        }
+
         .controls {
-            margin-bottom: 20px;
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 420px;
         }
+
         button {
-            padding: 10px 20px;
-            margin-right: 10px;
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .cast-button {
+            background-color: #9c27b0;
+        }
+
+        .cast-button:hover {
+            background-color: #7b1fa2;
+        }
+
+        .attack-button {
+            background-color: #f44336;
+        }
+
+        .attack-button:hover {
+            background-color: #d32f2f;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <div class="controls">
-        <button onclick="runOriginalLoop()">Run Original Loop</button>
-        <button onclick="runModifiedLoop()">Run Modified Loop</button>
-        <button onclick="clearOutput()">Clear</button>
+    <h1>LPC Character Animation</h1>
+    <div class="game-container">
+        <div class="character" id="character"></div>
     </div>
-    <div id="output"></div>
+    <div class="controls">
+        <button onclick="setAnimation('walk', 'down')">Walk Down</button>
+        <button onclick="setAnimation('walk', 'up')">Walk Up</button>
+        <button onclick="setAnimation('walk', 'left')">Walk Left</button>
+        <button onclick="setAnimation('walk', 'right')">Walk Right</button>
+        <button onclick="setAnimation('idle', 'down')">Idle</button>
+        <button onclick="setAnimation('slash', 'down')" class="attack-button">Attack</button>
+        <button onclick="setAnimation('cast', 'down')" class="cast-button">Cast Down</button>
+        <button onclick="setAnimation('cast', 'up')" class="cast-button">Cast Up</button>
+        <button onclick="setAnimation('cast', 'left')" class="cast-button">Cast Left</button>
+        <button onclick="setAnimation('cast', 'right')" class="cast-button">Cast Right</button>
+    </div>
+    <div class="instructions">
+        <p>Use the buttons to change the character's animation.</p>
+        <p>Arrow keys to move, Spacebar to attack, C key to cast a spell.</p>
+    </div>
 
-    <script>     
-        console.log("Hello World")
-        for (j = -1; j >= -8; j--) {
-            for (i = 1; i <= 8; i++) {
-                console.log(`Coordinate (${i}, ${j})`);
+    <script>
+        // Character configuration
+        const character = {
+            element: document.getElementById('character'),
+            x: 150,
+            y: 100,
+            speed: 2,
+            currentAnimation: 'idle',
+            currentDirection: 'down',
+            animationFrame: 0,
+            isMoving: false
+        };
+
+        // Animation frames mapping (based on standard LPC spritesheet format)
+        const animations = {
+            // Format: [startX, startY, frames, frameDuration]
+            'idle': {
+                'down':  [0, 0, 1, 100],
+                'left':  [0, 1, 1, 100],
+                'right': [0, 2, 1, 100],
+                'up':    [0, 3, 1, 100]
+            },
+            'walk': {
+                'down':  [0, 10, 8, 120],
+                'left':  [0, 9, 8, 120],
+                'right': [0, 11, 8, 120],
+                'up':    [0, 8, 8, 120]
+            },
+            'slash': {
+                'down':  [0, 4, 6, 100],
+                'left':  [0, 5, 6, 100],
+                'right': [0, 6, 6, 100],
+                'up':    [0, 7, 6, 100]
+            },
+            'cast': {
+                'down':  [0, 2, 6, 120],
+                'left':  [0, 1, 6, 120],
+                'right': [0, 3, 6, 120],
+                'up':    [0, 0, 6, 120]
+            }
+            // Add more animations here as needed
+        };
+
+        // Animation loop variables
+        let lastTime = 0;
+        let animationTimer = 0;
+        let keysPressed = {};
+
+        // Add visual effect for casting
+        function createSpellEffect(direction) {
+            const effect = document.createElement('div');
+            effect.style.position = 'absolute';
+            effect.style.width = '20px';
+            effect.style.height = '20px';
+            effect.style.borderRadius = '50%';
+            effect.style.backgroundColor = '#9c27b0';
+            effect.style.boxShadow = '0 0 10px 5px rgba(156, 39, 176, 0.7)';
+            
+            // Position based on character's position and direction
+            let effectX = character.x + 32;
+            let effectY = character.y + 32;
+            
+            // Set starting position and velocity
+            let velocityX = 0;
+            let velocityY = 0;
+            const speed = 5;
+            
+            switch(direction) {
+                case 'down':
+                    effectY += 30;
+                    velocityY = speed;
+                    break;
+                case 'up':
+                    effectY -= 30;
+                    velocityY = -speed;
+                    break;
+                case 'left':
+                    effectX -= 30;
+                    velocityX = -speed;
+                    break;
+                case 'right':
+                    effectX += 30;
+                    velocityX = speed;
+                    break;
+            }
+            
+            effect.style.left = effectX + 'px';
+            effect.style.top = effectY + 'px';
+            
+            document.querySelector('.game-container').appendChild(effect);
+            
+            // Animate the effect
+            const animateEffect = function() {
+                effectX += velocityX;
+                effectY += velocityY;
+                effect.style.left = effectX + 'px';
+                effect.style.top = effectY + 'px';
+                
+                // Remove when out of bounds
+                if (effectX < -20 || effectX > 420 || effectY < -20 || effectY > 320) {
+                    effect.remove();
+                    return;
+                }
+                
+                requestAnimationFrame(animateEffect);
+            };
+            
+            requestAnimationFrame(animateEffect);
+        }
+
+        // Set the animation
+        function setAnimation(animName, direction) {
+            character.currentAnimation = animName;
+            character.currentDirection = direction;
+            character.animationFrame = 0;
+            character.isMoving = animName === 'walk';
+            
+            // Create spell effect when casting
+            if (animName === 'cast') {
+                // Wait for the "casting" motion to complete before launching the effect
+                setTimeout(() => createSpellEffect(direction), 400);
             }
         }
+
+        // Update character position based on keys
+        function updatePosition() {
+            if (!character.isMoving) return;
+            
+            switch(character.currentDirection) {
+                case 'down':
+                    character.y += character.speed;
+                    if (character.y > 240) character.y = 240;
+                    break;
+                case 'up':
+                    character.y -= character.speed;
+                    if (character.y < 0) character.y = 0;
+                    break;
+                case 'left':
+                    character.x -= character.speed;
+                    if (character.x < 0) character.x = 0;
+                    break;
+                case 'right':
+                    character.x += character.speed;
+                    if (character.x > 340) character.x = 340;
+                    break;
+            }
+            
+            character.element.style.left = character.x + 'px';
+            character.element.style.top = character.y + 'px';
+        }
+
+        // Handle keyboard input
+        document.addEventListener('keydown', (e) => {
+            keysPressed[e.key] = true;
+            
+            switch(e.key) {
+                case 'ArrowDown':
+                    setAnimation('walk', 'down');
+                    break;
+                case 'ArrowUp':
+                    setAnimation('walk', 'up');
+                    break;
+                case 'ArrowLeft':
+                    setAnimation('walk', 'left');
+                    break;
+                case 'ArrowRight':
+                    setAnimation('walk', 'right');
+                    break;
+                case ' ': // Spacebar for attack
+                    setAnimation('slash', character.currentDirection);
+                    break;
+                case 'c': // C key for casting
+                    setAnimation('cast', character.currentDirection);
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keysPressed[e.key] = false;
+            
+            // Check if any movement keys are still pressed
+            const anyMovementKey = keysPressed['ArrowDown'] || 
+                                   keysPressed['ArrowUp'] || 
+                                   keysPressed['ArrowLeft'] || 
+                                   keysPressed['ArrowRight'];
+            
+            // Only switch to idle if no movement keys are pressed and we're not in a special animation
+            if (!anyMovementKey && character.currentAnimation === 'walk') {
+                setAnimation('idle', character.currentDirection);
+            }
+        });
+
+        // Main animation loop
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            // Update animation timer
+            animationTimer += deltaTime;
+            const currentAnim = animations[character.currentAnimation][character.currentDirection];
+            
+            if (animationTimer >= currentAnim[3]) {
+                // Advance to next frame
+                character.animationFrame = (character.animationFrame + 1) % currentAnim[2];
+                animationTimer = 0;
+                
+                // If we're at the last frame of a non-looping animation like attack or cast, go back to idle
+                if ((character.currentAnimation === 'slash' || character.currentAnimation === 'cast') && character.animationFrame === 0) {
+                    setAnimation('idle', character.currentDirection);
+                }
+            }
+
+            // Calculate sprite position on the spritesheet
+            const frameX = (currentAnim[0] + character.animationFrame) * 64; // Each frame is 64px wide
+            const frameY = currentAnim[1] * 64; // Each row is 64px tall
+            
+            // Update the background position
+            character.element.style.backgroundPosition = `-${frameX}px -${frameY}px`;
+            
+            // Update character position if moving
+            updatePosition();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize
+        character.element.style.left = character.x + 'px';
+        character.element.style.top = character.y + 'px';
+        requestAnimationFrame(gameLoop);
     </script>
 </body>
-</html> 
+</html>

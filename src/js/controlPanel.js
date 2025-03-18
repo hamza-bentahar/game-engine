@@ -20,6 +20,78 @@ export class ControlPanel {
         controlPanel.style.maxHeight = '80vh';
         controlPanel.style.overflowY = 'auto';
 
+        // Create character size section
+        const characterSection = document.createElement('div');
+        characterSection.style.marginBottom = '15px';
+        
+        // Character section title
+        const characterTitle = document.createElement('div');
+        characterTitle.textContent = 'Character Settings:';
+        characterTitle.style.marginBottom = '10px';
+        characterTitle.style.fontWeight = 'bold';
+        characterSection.appendChild(characterTitle);
+        
+        // Size control
+        const sizeLabel = document.createElement('div');
+        sizeLabel.textContent = 'Character Size:';
+        sizeLabel.style.marginBottom = '5px';
+        
+        const sizeInput = document.createElement('input');
+        sizeInput.type = 'range';
+        sizeInput.min = '1';
+        sizeInput.max = '4';
+        sizeInput.step = '0.1';
+        sizeInput.value = this.game.character.scale;
+        sizeInput.style.width = '100%';
+        sizeInput.style.marginBottom = '5px';
+        
+        const sizeValue = document.createElement('div');
+        sizeValue.textContent = `Size: ${this.game.character.scale}x`;
+        sizeValue.style.marginBottom = '10px';
+        sizeValue.style.fontSize = '12px';
+        
+        sizeInput.addEventListener('input', () => {
+            const newScale = parseFloat(sizeInput.value);
+            this.game.character.scale = newScale;
+            sizeValue.textContent = `Size: ${newScale.toFixed(1)}x`;
+        });
+        
+        // Vertical offset control
+        const offsetLabel = document.createElement('div');
+        offsetLabel.textContent = 'Vertical Offset:';
+        offsetLabel.style.marginBottom = '5px';
+        
+        const offsetInput = document.createElement('input');
+        offsetInput.type = 'range';
+        offsetInput.min = '0';
+        offsetInput.max = '64';
+        offsetInput.step = '1';
+        offsetInput.value = this.game.character.verticalOffset;
+        offsetInput.style.width = '100%';
+        offsetInput.style.marginBottom = '5px';
+        
+        const offsetValue = document.createElement('div');
+        offsetValue.textContent = `Offset: ${this.game.character.verticalOffset}px`;
+        offsetValue.style.marginBottom = '10px';
+        offsetValue.style.fontSize = '12px';
+        
+        offsetInput.addEventListener('input', () => {
+            const newOffset = parseInt(offsetInput.value);
+            this.game.character.verticalOffset = newOffset;
+            offsetValue.textContent = `Offset: ${newOffset}px`;
+        });
+        
+        // Assemble character section
+        characterSection.appendChild(sizeLabel);
+        characterSection.appendChild(sizeInput);
+        characterSection.appendChild(sizeValue);
+        characterSection.appendChild(offsetLabel);
+        characterSection.appendChild(offsetInput);
+        characterSection.appendChild(offsetValue);
+
+        // Add character section to control panel (at the top)
+        controlPanel.appendChild(characterSection);
+
         // Create tile selection section
         const tileSelectionDiv = document.createElement('div');
         tileSelectionDiv.style.marginBottom = '15px';
@@ -321,6 +393,136 @@ export class ControlPanel {
             toggleObstacleButton.style.backgroundColor = this.grid.isPlacingObstacle ? '#c0392b' : '';
         });
         
+        // Create next grid section
+        const nextGridSection = document.createElement('div');
+        nextGridSection.style.marginBottom = '15px';
+        
+        // Next grid section title
+        const nextGridTitle = document.createElement('div');
+        nextGridTitle.textContent = 'Next Grid Settings:';
+        nextGridTitle.style.marginBottom = '10px';
+        nextGridTitle.style.fontWeight = 'bold';
+        nextGridSection.appendChild(nextGridTitle);
+        
+        // Create description
+        const nextGridDescription = document.createElement('div');
+        nextGridDescription.textContent = 'Set the next grid for the selected tile (click on a tile to select it):';
+        nextGridDescription.style.marginBottom = '10px';
+        nextGridDescription.style.fontSize = '12px';
+        nextGridSection.appendChild(nextGridDescription);
+        
+        // Create selected tile display
+        const selectedTileDisplay = document.createElement('div');
+        selectedTileDisplay.id = 'selected-tile-display';
+        selectedTileDisplay.style.marginBottom = '10px';
+        selectedTileDisplay.style.fontSize = '14px';
+        selectedTileDisplay.style.fontWeight = 'bold';
+        selectedTileDisplay.style.color = '#f1c40f';
+        selectedTileDisplay.textContent = 'No tile selected';
+        nextGridSection.appendChild(selectedTileDisplay);
+        
+        // Create coordinate inputs container
+        const coordInputsContainer = document.createElement('div');
+        coordInputsContainer.style.display = 'flex';
+        coordInputsContainer.style.alignItems = 'center';
+        coordInputsContainer.style.marginBottom = '10px';
+        
+        // X coordinate input
+        const xLabel = document.createElement('div');
+        xLabel.textContent = 'X:';
+        xLabel.style.marginRight = '5px';
+        
+        const xInput = document.createElement('input');
+        xInput.type = 'number';
+        xInput.id = 'nextGridXInput';
+        xInput.style.width = '50px';
+        xInput.style.marginRight = '10px';
+        
+        // Y coordinate input
+        const yLabel = document.createElement('div');
+        yLabel.textContent = 'Y:';
+        yLabel.style.marginRight = '5px';
+        
+        const yInput = document.createElement('input');
+        yInput.type = 'number';
+        yInput.id = 'nextGridYInput';
+        yInput.style.width = '50px';
+        
+        // Assemble coordinate inputs
+        coordInputsContainer.appendChild(xLabel);
+        coordInputsContainer.appendChild(xInput);
+        coordInputsContainer.appendChild(yLabel);
+        coordInputsContainer.appendChild(yInput);
+        nextGridSection.appendChild(coordInputsContainer);
+        
+        // Create buttons container
+        const nextGridButtonsContainer = document.createElement('div');
+        nextGridButtonsContainer.style.display = 'flex';
+        nextGridButtonsContainer.style.gap = '5px';
+        
+        // Set next grid button
+        const setNextGridButton = document.createElement('button');
+        setNextGridButton.textContent = 'Set Next Grid';
+        setNextGridButton.style.backgroundColor = '#f1c40f';
+        setNextGridButton.style.color = 'black';
+        
+        // Clear next grid button
+        const clearNextGridButton = document.createElement('button');
+        clearNextGridButton.textContent = 'Clear Next Grid';
+        
+        // Add event listeners
+        setNextGridButton.addEventListener('click', () => {
+            const x = parseInt(xInput.value);
+            const y = parseInt(yInput.value);
+            
+            if (!isNaN(x) && !isNaN(y) && this.grid.selectedTileKey) {
+                const [tileX, tileY] = this.grid.selectedTileKey.split(',').map(Number);
+                const nextGridValue = `${x},${y}`;
+                this.grid.setNextGrid(tileX, tileY, nextGridValue);
+            }
+        });
+        
+        clearNextGridButton.addEventListener('click', () => {
+            if (this.grid.selectedTileKey) {
+                const [tileX, tileY] = this.grid.selectedTileKey.split(',').map(Number);
+                this.grid.setNextGrid(tileX, tileY, null);
+                xInput.value = '';
+                yInput.value = '';
+            }
+        });
+        
+        // Add click handler to update input fields
+        this.grid.canvas.addEventListener('click', (event) => {
+            // Only update the nextGrid inputs when in edit mode
+            if (!this.grid.editMode) return;
+            
+            // Update the selected tile display
+            if (this.grid.selectedTileKey) {
+                const [tileX, tileY] = this.grid.selectedTileKey.split(',').map(Number);
+                selectedTileDisplay.textContent = `Selected Tile: (${tileX}, ${tileY})`;
+                
+                // Update input fields with current nextGrid value
+                const nextGrid = this.grid.getNextGrid(tileX, tileY);
+                if (nextGrid) {
+                    const [nextX, nextY] = nextGrid.split(',').map(Number);
+                    xInput.value = nextX;
+                    yInput.value = nextY;
+                } else {
+                    xInput.value = '';
+                    yInput.value = '';
+                }
+            } else {
+                selectedTileDisplay.textContent = 'No tile selected';
+                xInput.value = '';
+                yInput.value = '';
+            }
+        });
+        
+        // Assemble next grid buttons
+        nextGridButtonsContainer.appendChild(setNextGridButton);
+        nextGridButtonsContainer.appendChild(clearNextGridButton);
+        nextGridSection.appendChild(nextGridButtonsContainer);
+        
         // Assemble current tile section
         currentTileSection.appendChild(currentTileLabel);
         currentTileSection.appendChild(currentTileInput);
@@ -329,6 +531,7 @@ export class ControlPanel {
         // Add sections to control panel
         controlPanel.appendChild(tileGridSection);
         controlPanel.appendChild(currentTileSection);
+        controlPanel.appendChild(nextGridSection);
         controlPanel.appendChild(tileSelectionDiv);
         controlPanel.appendChild(layoutSelect);
         controlPanel.appendChild(newLayoutInput);
