@@ -1,4 +1,5 @@
 import { Character } from './character.js';
+import { Monster } from './monster.js';
 import { IsometricGrid } from './grid.js';
 import { ControlPanel } from './controlPanel.js';
 
@@ -11,10 +12,19 @@ class IsometricGame {
         this.updateCanvasSize();
         
         // Create grid
-        this.grid = new IsometricGrid(this.canvas, 23, 22);
+        this.grid = new IsometricGrid(this.canvas, 22, 22);
+        
+        // Add reference to game in grid for monster AI
+        this.grid.game = this;
         
         // Create character with selected type and name
         this.character = new Character(this.grid, characterType, characterName);
+        
+        // Initialize monsters array
+        this.monsters = [];
+        
+        // Create monsters for the current layout
+        this.spawnMonsters();
         
         // Create control panel
         this.createControlPanel();
@@ -203,6 +213,15 @@ class IsometricGame {
     // Main render loop
     render() {
         this.grid.render();
+        
+        // Update and draw all monsters
+        this.monsters = this.monsters.filter(monster => monster.isAlive);
+        this.monsters.forEach(monster => {
+            monster.update();
+            monster.draw(this.ctx);
+        });
+        
+        // Update and draw character last (to appear on top)
         this.character.update();
         this.character.draw(this.ctx);
         
@@ -250,6 +269,65 @@ class IsometricGame {
             const targetY = this.character.path[this.character.path.length - 1].y;
             this.character.moveTo(targetX, targetY);
         }
+    }
+
+    spawnMonsters() {
+        // Clear existing monsters
+        this.monsters = [];
+        
+        // Add a dragon to a random position
+        this.addMonster('dragon', this.getRandomSpawnPosition());
+        
+        // Add a minotaur to a different random position
+        this.addMonster('minotaur', this.getRandomSpawnPosition());
+    }
+    
+    getRandomSpawnPosition() {
+        // Get all valid tile positions from the grid
+        const validPositions = Array.from(this.grid.tiles.keys())
+            .map(key => {
+                const [x, y] = key.split(',').map(Number);
+                return { x, y };
+            })
+            .filter(pos => {
+                // Filter out positions that:
+                // 1. Are not obstacles
+                // 2. Are not too close to the player
+                // 3. Are not too close to other monsters
+                const isNotObstacle = !this.grid.hasObstacle(pos.x, pos.y);
+                const isFarFromPlayer = this.getDistanceToPlayer(pos) > 5;
+                const isFarFromMonsters = this.monsters.every(monster => {
+                    const dx = monster.x - pos.x;
+                    const dy = monster.y - pos.y;
+                    return Math.sqrt(dx * dx + dy * dy) > 3; // Keep monsters at least 3 tiles apart
+                });
+                
+                return isNotObstacle && isFarFromPlayer && isFarFromMonsters;
+            });
+
+        // If no valid positions found, return a default position
+        if (validPositions.length === 0) {
+            console.warn('No valid spawn positions found!');
+            return { x: 0, y: 0 };
+        }
+
+        // Return a random valid position
+        const randomIndex = Math.floor(Math.random() * validPositions.length);
+        return validPositions[randomIndex];
+    }
+    
+    getDistanceToPlayer(position) {
+        const dx = this.character.x - position.x;
+        const dy = this.character.y - position.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    addMonster(type, position) {
+        const monster = new Monster(this.grid, type);
+        monster.x = position.x;
+        monster.y = position.y;
+        console.log(`Spawned ${type} monster at (${monster.x}, ${monster.y})`);
+        this.monsters.push(monster);
     }
 }
 

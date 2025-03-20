@@ -111,7 +111,7 @@ class Tile {
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`${this.x},${this.y},${this.nextGrid}`, screenX, screenY + tileHeight / 2 - this.heightOffset);
+            ctx.fillText(`${this.x},${this.y}`, screenX, screenY + tileHeight / 2 - this.heightOffset);
         }
     }
 

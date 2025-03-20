@@ -32,6 +32,7 @@ class IsometricGrid {
         
         // Add tiles storage
         this.tiles = new Map();
+        console.log(this.tiles);
         
         // Add hovered tile tracking
         this.hoveredTileKey = null;
