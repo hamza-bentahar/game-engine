@@ -193,10 +193,7 @@ class IsometricGrid {
         // Clear the area where the grid will be drawn
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        const totalRows = 23;
-        const maxColumns = 23;
-
-        this.drawTilePattern(totalRows, maxColumns);
+        this.drawTilePattern(this.nbRows, this.nbCols);
         
         // Draw debug visualization if debug mode is on
         if (this.debugMode) {

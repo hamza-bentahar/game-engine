@@ -11,7 +11,7 @@ class IsometricGame {
         this.updateCanvasSize();
         
         // Create grid
-        this.grid = new IsometricGrid(this.canvas, 6, 6);
+        this.grid = new IsometricGrid(this.canvas, 23, 22);
         
         // Create character with selected type and name
         this.character = new Character(this.grid, characterType, characterName);
