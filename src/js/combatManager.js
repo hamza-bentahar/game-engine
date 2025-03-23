@@ -319,12 +319,9 @@ class CombatManager {
     }
 
     performAttack() {
-        if (this.game.character.useAP(6)) {
-            // Perform attack animation
-            // TODO: Add attack animation
-            
+        const damage = this.game.character.attack(this.currentEnemy);
+        if (damage > 0) {
             // Deal damage
-            const damage = 20; // Base damage, can be modified based on character stats
             this.currentEnemy.takeDamage(damage);
             
             // Update UI
@@ -384,8 +381,8 @@ class CombatManager {
         }
         
         // Attack if in range
-        if (this.isInAttackRange() && monster.useAP(6)) {
-            const damage = 15; // Base monster damage
+        if (this.isInAttackRange()) {
+            const damage = monster.attack(character);
             character.takeDamage(damage);
             this.updateMonsterStats();
             

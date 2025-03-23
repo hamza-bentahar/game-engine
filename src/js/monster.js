@@ -85,10 +85,6 @@ class Monster extends Character {
 
         // Get screen coordinates
         const { x: screenX, y: screenY } = this.grid.toScreen(this.x, this.y);
-        
-        // Log drawing position
-        console.log(`Drawing ${this.monsterType} at screen coordinates: (${screenX}, ${screenY})`);
-        console.log(`Current animation: ${this.currentAnimation}, Direction: ${this.currentDirection}`);
 
         // Call parent draw method
         super.draw(ctx);
@@ -114,6 +110,17 @@ class Monster extends Character {
             const size = this.spriteWidth * this.scale;
             ctx.strokeRect(screenX - size/2, screenY - size/2, size, size);
         }
+    }
+
+    // Mage-specific attack method
+    attack(target) {
+        console.log('Monster attacking');
+        if (this.useAP(6)) {
+            // Magical attack animation
+            this.setAnimation('slash', this.currentDirection);
+            return this.attackDamage;
+        }
+        return 0;
     }
 }
 

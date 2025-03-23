@@ -12,6 +12,8 @@ class Character {
         this.speedStep = 0.01;
         this.path = []; // Store the path
         this.currentResizeHandler = null; // Store the current resize handler
+        this.isInSpecialAnimation = false;
+        this.specialAnimationEndTime = 0;
 
         // Base character stats - these will be overridden by specific classes
         this.level = 1;
@@ -44,22 +46,108 @@ class Character {
         // Base animation frames mapping
         this.animations = {
             'idle': {
-                'down':  [0, 0, 1, 100],
+                'up':    [0, 3, 1, 100],
                 'left':  [0, 1, 1, 100],
-                'right': [0, 2, 1, 100],
-                'up':    [0, 3, 1, 100]
+                'down':  [0, 0, 1, 100],
+                'right': [0, 2, 1, 100]
+            },
+            'animated-idle': {
+                'up':    [0, 22, 2, 200],
+                'left':  [0, 23, 2, 200],
+                'down':  [0, 24, 2, 200],
+                'right': [0, 25, 2, 200]
             },
             'walk': {
-                'down':  [0, 10, 8, 120],
+                'up':    [0, 8, 8, 120],
                 'left':  [0, 9, 8, 120],
-                'right': [0, 11, 8, 120],
-                'up':    [0, 8, 8, 120]
-            }
+                'down':  [0, 10, 8, 120],
+                'right': [0, 11, 8, 120]
+            },
+            'cast': {
+                'up':    [0, 0, 6, 120],
+                'left':  [0, 1, 6, 120],
+                'down':  [0, 2, 6, 120],
+                'right': [0, 3, 6, 120]
+            },
+            'slash': {
+                'up':    [0, 12, 6, 120],
+                'left':  [0, 13, 6, 120],
+                'down':  [0, 14, 6, 120],
+                'right': [0, 15, 6, 120]
+            },
+            'one-handed-back-slash': {
+                'up':    [0, 16, 13, 120],
+                'left':  [0, 17, 13, 120],
+                'down':  [0, 18, 13, 120],
+                'right': [0, 19, 13, 120]
+            },
+            'shoot': {
+                'up':    [0, 4, 8, 120],
+                'left':  [0, 5, 8, 120],
+                'down':  [0, 6, 8, 120],
+                'right': [0, 7, 8, 120]
+            },
+            'hurt': {
+                'up':    [0, 20, 6, 120],
+                'left':  [0, 20, 6, 120],
+                'down':  [0, 20, 6, 120],
+                'right': [0, 20, 6, 120],
+            },
+            'climb': {
+                'up':    [0, 21, 6, 120],
+                'left':  [0, 21, 6, 120],
+                'down':  [0, 21, 6, 120],
+                'right': [0, 21, 6, 120],
+            },
+            'jump': {
+                'up':    [0, 26, 5, 120],
+                'left':  [0, 27, 5, 120],
+                'down':  [0, 28, 5, 120],
+                'right': [0, 29, 5, 120],
+            },
+            'sit': {
+                'up':    [0, 30, 3, 200],
+                'left':  [0, 31, 3, 200],
+                'down':  [0, 32, 3, 200],
+                'right': [0, 33, 3, 200],
+            },
+            'emote': {
+                'up':    [0, 34, 3, 200],
+                'left':  [0, 35, 3, 200],
+                'down':  [0, 36, 3, 200],
+                'right': [0, 37, 3, 200],
+            },
+            'run': {
+                'up':    [0, 38, 8, 120],
+                'left':  [0, 39, 8, 120],
+                'down':  [0, 40, 8, 120],
+                'right': [0, 41, 8, 120],
+            },
+            'combat-idle': {
+                'up':    [0, 42, 2, 250],
+                'left':  [0, 43, 2, 250],
+                'down':  [0, 44, 2, 250],
+                'right': [0, 45, 2, 250],
+            },
+            'one-handed-back-slash': {
+                'up':    [0, 46, 13, 120],
+                'left':  [0, 47, 13, 120],
+                'down':  [0, 48, 13, 120],
+                'right': [0, 49, 13, 120],
+            },
+            'one-handed-slash': {
+                'up':    [0, 50, 6, 120],
+                'left':  [0, 51, 13, 120],
+                'down':  [0, 52, 13, 120],
+                'right': [0, 53, 13, 120],
+            },
+            
         };
     }
 
     // Base attack method - should be overridden by specific classes
     attack(target) {
+        console.log('Character attacking');
         if (this.useAP(6)) {
             return this.attackDamage;
         }
@@ -208,11 +296,17 @@ class Character {
     }
 
     update() {
-        if (!this.isMoving) {
+        // Check if special animation has ended
+        if (this.isInSpecialAnimation && performance.now() >= this.specialAnimationEndTime) {
+            this.isInSpecialAnimation = false;
             this.setAnimation('idle', this.currentDirection);
         }
 
-        if (this.isMoving) {
+        if (!this.isMoving && !this.isInSpecialAnimation) {
+            this.setAnimation('idle', this.currentDirection);
+        }
+
+        if (this.isMoving && !this.isInSpecialAnimation) {
             const dx = this.targetX - this.x;
             const dy = this.targetY - this.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
@@ -284,6 +378,15 @@ class Character {
         this.currentDirection = direction;
         this.animationFrame = 0;
         this.animationTimer = 0;
+
+        // Set special animation flag for non-idle/walk animations
+        if (animName !== 'idle' && animName !== 'walk') {
+            this.isInSpecialAnimation = true;
+            // Set end time based on animation duration
+            const animFrames = this.animations[animName][direction][2];
+            const frameDuration = this.animations[animName][direction][3];
+            this.specialAnimationEndTime = performance.now() + (animFrames * frameDuration);
+        }
     }
 
     // Create a transition effect when loading a new grid

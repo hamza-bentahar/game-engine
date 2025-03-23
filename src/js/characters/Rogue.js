@@ -32,6 +32,7 @@ class Rogue extends Character {
 
     // Rogue-specific attack method with critical hits
     attack(target) {
+        console.log('Rogue attacking');
         if (this.useAP(6)) {
             // Throwing attack animation
             this.setAnimation('throw', this.currentDirection);

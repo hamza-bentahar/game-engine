@@ -1,4 +1,7 @@
 import { Character } from './character.js';
+import { Mage } from './characters/Mage.js';
+import { Warrior } from './characters/Warrior.js';
+import { Rogue } from './characters/Rogue.js';
 import { Monster } from './monster.js';
 import { IsometricGrid } from './grid.js';
 import { ControlPanel } from './controlPanel.js';
@@ -27,7 +30,21 @@ class IsometricGame {
         this.grid.game = this;
         
         // Create character with selected type and name
-        this.character = new Character(this.grid, characterType, characterName);
+        switch (characterType.toLowerCase()) {
+            case 'mage':
+                this.character = new Mage(this.grid, characterName);
+                break;
+            case 'warrior':
+                this.character = new Warrior(this.grid, characterName);
+                break;
+            case 'rogue':
+                this.character = new Rogue(this.grid, characterName);
+                break;
+            default:
+                console.warn(`Unknown character type: ${characterType}. Defaulting to Mage.`);
+                this.character = new Mage(this.grid, characterName);
+                break;
+        }
         
         // Initialize monsters array
         this.monsters = [];
@@ -89,6 +106,15 @@ class IsometricGame {
             } else if (event.key === 'e') {
                 const isEditMode = this.grid.toggleEditMode();
                 this.updateControlPanelVisibility(isEditMode);
+            } else if (event.key === 's') {
+                // Trigger casting animation in current direction
+                this.character.setAnimation('one-handed-back-slash', this.character.currentDirection);
+            } else if (event.key === 'c') {
+                // Trigger casting animation in current direction
+                this.character.setAnimation('one-handed-slash', this.character.currentDirection);
+            } else if (event.key === 'j') {
+                // Trigger casting animation in current direction
+                this.character.setAnimation('jump', this.character.currentDirection);
             }
         });
 

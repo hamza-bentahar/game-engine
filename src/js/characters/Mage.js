@@ -13,21 +13,11 @@ class Mage extends Character {
         this.currentMP = this.maxMP;
         this.attackRange = 3; // Longer attack range
         this.attackDamage = 25;
-        
-        // Mage-specific animations
-        this.animations = {
-            ...this.animations,
-            'cast': {
-                'down':  [0, 4, 7, 100],
-                'left':  [0, 5, 7, 100],
-                'right': [0, 6, 7, 100],
-                'up':    [0, 7, 7, 100]
-            }
-        };
     }
 
     // Mage-specific attack method
     attack(target) {
+        console.log('Mage attacking');
         if (this.useAP(6)) {
             // Magical attack animation
             this.setAnimation('cast', this.currentDirection);
