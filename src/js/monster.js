@@ -49,27 +49,26 @@ class Monster extends Character {
     update() {
         if (!this.isAlive) return;
 
-        // Get player character reference
-        const player = this.grid.game.character;
-        
-        // Calculate distance to player
-        const dx = player.x - this.x;
-        const dy = player.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        // If player is within detection range and monster is aggressive
-        if (this.isAggressive && distance <= this.detectionRange) {
-            // If within attack range, attack
-            if (distance <= this.attackRange) {
-                console.log('Attacking player');
-            } else {
-                // Otherwise, move towards player
-                this.moveTo(Math.round(player.x), Math.round(player.y));
+        // Only update animations if not in combat
+        if (!this.grid.game.combatManager.inCombat) {
+            // Just update animation state
+            if (!this.isMoving) {
+                this.setAnimation('idle', this.currentDirection);
             }
+            super.update();
+            return;
         }
 
-        // Call parent update for animation and movement
-        super.update();
+        // If in combat, only update if this monster is the current enemy
+        if (this.grid.game.combatManager.currentEnemy === this) {
+            super.update();
+        } else {
+            // Just update animation state for non-combat monsters
+            if (!this.isMoving) {
+                this.setAnimation('idle', this.currentDirection);
+            }
+            super.update();
+        }
     }
 
     draw(ctx) {
