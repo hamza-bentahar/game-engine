@@ -8,7 +8,15 @@ class IsometricGame {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         
-        // Set canvas size with 16:9 aspect ratio
+        // Create stats canvas
+        this.statsCanvas = document.createElement('canvas');
+        this.statsCanvas.id = 'statsCanvas';
+        this.statsCtx = this.statsCanvas.getContext('2d');
+        
+        // Position stats canvas below the main canvas
+        this.canvas.parentElement.appendChild(this.statsCanvas);
+        
+        // Set canvas sizes
         this.updateCanvasSize();
         
         // Create grid
@@ -98,14 +106,13 @@ class IsometricGame {
     
     updateCanvasSize() {
         const maxWidth = window.innerWidth * 1;
-        const maxHeight = window.innerHeight * 0.70; // Changed from 0.8 to 0.6 (60% of window height)
+        const maxHeight = window.innerHeight * 0.70;
         
-        // Calculate dimensions maintaining 16:9 ratio
+        // Calculate dimensions maintaining 16:9 ratio for main canvas
         const targetRatio = 16 / 9;
         let width = maxWidth;
         let height = width / targetRatio;
         
-        // If height is too big, calculate based on height instead
         if (height > maxHeight) {
             height = maxHeight;
             width = height * targetRatio;
@@ -114,10 +121,20 @@ class IsometricGame {
         this.canvas.width = Math.floor(width);
         this.canvas.height = Math.floor(height);
         
-        // Position canvas with padding from top-left corner
+        // Set stats canvas size (same width, but shorter height)
+        this.statsCanvas.width = this.canvas.width;
+        this.statsCanvas.height = 80; // Fixed height for stats
+        
+        // Position canvases
         this.canvas.style.position = 'absolute';
         this.canvas.style.left = '20px';
         this.canvas.style.top = '20px';
+        
+        this.statsCanvas.style.position = 'absolute';
+        this.statsCanvas.style.left = '20px';
+        this.statsCanvas.style.top = `${20 + this.canvas.height + 10}px`; // 10px gap
+        this.statsCanvas.style.backgroundColor = '#2c3e50'; // Dark blue-grey background
+        this.statsCanvas.style.borderRadius = '5px';
     }
     
     // Handle mousedown for tile placement
@@ -212,6 +229,7 @@ class IsometricGame {
     
     // Main render loop
     render() {
+        // Render main game
         this.grid.render();
         
         // Update and draw all monsters
@@ -221,9 +239,12 @@ class IsometricGame {
             monster.draw(this.ctx);
         });
         
-        // Update and draw character last (to appear on top)
+        // Update and draw character
         this.character.update();
         this.character.draw(this.ctx);
+        
+        // Render stats
+        this.renderStats();
         
         // Request next frame
         requestAnimationFrame(this.render);
@@ -328,6 +349,61 @@ class IsometricGame {
         monster.y = position.y;
         console.log(`Spawned ${type} monster at (${monster.x}, ${monster.y})`);
         this.monsters.push(monster);
+    }
+
+    renderStats() {
+        const ctx = this.statsCtx;
+        const canvas = this.statsCanvas;
+        
+        // Clear the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Set up fonts and colors
+        ctx.font = '16px Arial';
+        ctx.textBaseline = 'middle';
+        
+        const padding = 20;
+        const barHeight = 20;
+        const barWidth = 150;
+        const spacing = 10;
+        
+        // Draw character name and level
+        ctx.fillStyle = '#ecf0f1';
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText(`${this.character.name} - Level ${this.character.level}`, padding, 25);
+        
+        // Helper function to draw bars
+        const drawBar = (x, y, current, max, fillColor, label) => {
+            // Draw bar background
+            ctx.fillStyle = '#34495e';
+            ctx.fillRect(x, y - barHeight/2, barWidth, barHeight);
+            
+            // Draw bar fill
+            ctx.fillStyle = fillColor;
+            const fillWidth = (current / max) * barWidth;
+            ctx.fillRect(x, y - barHeight/2, fillWidth, barHeight);
+            
+            // Draw border
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y - barHeight/2, barWidth, barHeight);
+            
+            // Draw text
+            ctx.fillStyle = '#ecf0f1';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`${label}: ${current}/${max}`, x + barWidth + spacing, y);
+        };
+        
+        // Draw HP bar
+        drawBar(padding, 55, this.character.health, this.character.maxHealth, '#e74c3c', 'HP');
+        
+        // Draw AP bar
+        drawBar(padding + barWidth + 100, 25, this.character.currentAP, this.character.maxAP, '#3498db', 'AP');
+        
+        // Draw MP bar
+        drawBar(padding + barWidth + 100, 55, this.character.currentMP, this.character.maxMP, '#2ecc71', 'MP');
     }
 }
 

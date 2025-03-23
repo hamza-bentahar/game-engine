@@ -13,6 +13,15 @@ class Character {
         this.path = []; // Store the path
         this.currentResizeHandler = null; // Store the current resize handler
 
+        // Character stats
+        this.level = 1;
+        this.maxHealth = 100;
+        this.health = this.maxHealth;
+        this.maxAP = 6;
+        this.currentAP = this.maxAP;
+        this.maxMP = 3;
+        this.currentMP = this.maxMP;
+
         // Character info
         this.characterType = characterType;
         this.name = characterName;
@@ -448,6 +457,47 @@ class Character {
             ctx.textBaseline = 'bottom';
             ctx.fillText(`Speed: ${this.moveSpeed.toFixed(2)}`, screenX, screenY);
         }
+    }
+
+    // Add methods to manage stats
+    resetStats() {
+        this.currentAP = this.maxAP;
+        this.currentMP = this.maxMP;
+    }
+
+    useAP(amount) {
+        if (this.currentAP >= amount) {
+            this.currentAP -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    useMP(amount) {
+        if (this.currentMP >= amount) {
+            this.currentMP -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    takeDamage(amount) {
+        this.health = Math.max(0, this.health - amount);
+        return this.health > 0;
+    }
+
+    heal(amount) {
+        this.health = Math.min(this.maxHealth, this.health + amount);
+    }
+
+    gainExperience(amount) {
+        // Simple leveling system - can be expanded later
+        this.level += 1;
+        this.maxHealth += 20;
+        this.health = this.maxHealth;
+        this.maxAP += 1;
+        this.maxMP += 1;
+        this.resetStats();
     }
 }
 
