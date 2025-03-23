@@ -96,52 +96,34 @@ export class WorldMap {
 
         // Get all grid positions from localStorage
         layouts.forEach(layoutName => {
-            const layoutKey = `isometricGridLayout_${layoutName}`;
-            const savedTiles = localStorage.getItem(layoutKey);
-            if (savedTiles) {
-                const tilesData = JSON.parse(savedTiles);
-                tilesData.forEach(tile => {
-                    if (tile.nextGrid) {
-                        const [fromX, fromY] = tile.key.split(',').map(Number);
-                        const [toX, toY] = tile.nextGrid.split(',').map(Number);
-                        
-                        if (!gridPositions.has(layoutName)) {
-                            gridPositions.set(layoutName, { x: fromX, y: fromY });
-                        }
-                        if (!gridPositions.has(tile.nextGrid)) {
-                            gridPositions.set(tile.nextGrid, { x: toX, y: toY });
-                        }
-                    }
-                });
-            }
+            const [x, y] = layoutName.split(',').map(Number);
+            gridPositions.set(layoutName, { x, y });
         });
 
         // Calculate grid boundaries
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        gridPositions.forEach(pos => {
-            minX = Math.min(minX, pos.x);
-            maxX = Math.max(maxX, pos.x);
-            minY = Math.min(minY, pos.y);
-            maxY = Math.max(maxY, pos.y);
-        });
+        let minX = -10, maxX = 10;  // Allow for 20x20 grid centered at 0,0
+        let minY = -10, maxY = 10;
 
-        // Add padding
-        minX -= 1; maxX += 1; minY -= 1; maxY += 1;
-
-        // Calculate scale
+        // Calculate scale to fit in map
         const mapWidth = 400;
         const mapHeight = 400;
-        const scaleX = mapWidth / (maxX - minX);
-        const scaleY = mapHeight / (maxY - minY);
-        const scale = Math.min(scaleX, scaleY) * 0.8;
+        const gridWidth = maxX - minX + 1;
+        const gridHeight = maxY - minY + 1;
+        const scaleX = mapWidth / gridWidth;
+        const scaleY = mapHeight / gridHeight;
+        const scale = Math.min(scaleX, scaleY) * 0.8; // 0.8 to leave some margin
+
+        // Calculate center position
+        const centerX = mapWidth / 2;
+        const centerY = mapHeight / 2;
 
         // Draw grids and connections
         gridPositions.forEach((pos, layoutName) => {
             // Create grid node
             const node = document.createElement('div');
             node.style.position = 'absolute';
-            node.style.width = '60px';
-            node.style.height = '60px';
+            node.style.width = '40px';
+            node.style.height = '40px';
             node.style.backgroundColor = layoutName === this.grid.currentLayout ? '#4CAF50' : '#666';
             node.style.border = '2px solid #888';
             node.style.borderRadius = '5px';
@@ -154,11 +136,13 @@ export class WorldMap {
             node.style.transition = 'background-color 0.3s';
             node.textContent = layoutName;
 
-            // Position the node
-            const x = (pos.x - minX) * scale + (mapWidth - (maxX - minX) * scale) / 2;
-            const y = (pos.y - minY) * scale + (mapHeight - (maxY - minY) * scale) / 2;
-            node.style.left = `${x - 30}px`;
-            node.style.top = `${y - 30}px`;
+            // Position the node relative to center
+            // Multiply by scale and add center position
+            const x = centerX + (pos.x * 50); // 50px spacing between nodes
+            const y = centerY + (pos.y * 50);
+            
+            node.style.left = `${x - 20}px`; // -20 to center the 40px wide node
+            node.style.top = `${y - 20}px`;
 
             // Add hover effect
             node.onmouseover = () => {
@@ -171,6 +155,36 @@ export class WorldMap {
                     node.style.backgroundColor = '#666';
                 }
             };
+
+            // Draw connection lines to adjacent grids
+            const adjacentPositions = [
+                {x: pos.x + 1, y: pos.y}, // right
+                {x: pos.x - 1, y: pos.y}, // left
+                {x: pos.x, y: pos.y + 1}, // down
+                {x: pos.x, y: pos.y - 1}  // up
+            ];
+
+            adjacentPositions.forEach(adjPos => {
+                const adjLayoutName = `${adjPos.x},${adjPos.y}`;
+                if (gridPositions.has(adjLayoutName)) {
+                    const line = document.createElement('div');
+                    line.style.position = 'absolute';
+                    line.style.backgroundColor = '#888';
+                    line.style.width = '2px';
+                    line.style.height = '50px';
+                    line.style.left = `${x}px`;
+                    line.style.top = `${y}px`;
+                    line.style.transformOrigin = 'top';
+                    
+                    // Calculate angle based on direction
+                    const dx = adjPos.x - pos.x;
+                    const dy = adjPos.y - pos.y;
+                    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+                    line.style.transform = `rotate(${angle}deg)`;
+                    
+                    this.mapContent.appendChild(line);
+                }
+            });
 
             this.mapContent.appendChild(node);
         });
