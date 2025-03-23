@@ -422,9 +422,17 @@ class CombatManager {
         if (playerWon) {
             // Remove defeated monster
             this.game.monsters = this.game.monsters.filter(m => m !== this.currentEnemy);
+            
+            // Calculate experience based on monster's level
+            const baseExperience = 100;
+            const levelDifference = this.currentEnemy.level - this.game.character.level;
+            const experienceMultiplier = Math.max(0.5, 1 + (levelDifference * 0.1));
+            const experienceGained = Math.floor(baseExperience * this.currentEnemy.level * experienceMultiplier);
+            
             // Give experience to player
-            this.game.character.gainExperience();
-            alert('Victory! You defeated the monster!');
+            this.game.character.gainExperience(experienceGained);
+            
+            alert(`Victory! You defeated the monster and gained ${experienceGained} experience!`);
         } else {
             alert('Defeat! The monster has defeated you!');
             // Optionally reset the game or implement game over screen

@@ -26,6 +26,31 @@ class Character {
         this.attackRange = 1;
         this.attackDamage = 20;
 
+        // Experience system
+        this.experience = 0;
+        this.experienceToLevel = [
+            0,      // Level 0 to 1 (not used)
+            110,    // Level 1 to 2
+            650,    // Level 2 to 3
+            1500,   // Level 3 to 4
+            2800,   // Level 4 to 5
+            4800,   // Level 5 to 6
+            7300,   // Level 6 to 7
+            10500,  // Level 7 to 8
+            14500,  // Level 8 to 9
+            19200,  // Level 9 to 10
+            25200,  // Level 10 to 11
+            32600,  // Level 11 to 12
+            41000,  // Level 12 to 13
+            50500,  // Level 13 to 14
+            61000,  // Level 14 to 15
+            75000,  // Level 15 to 16
+            91000,  // Level 16 to 17
+            115000, // Level 17 to 18
+            142000, // Level 18 to 19
+            171000  // Level 19 to 20
+        ];
+
         // Character info
         this.characterType = characterType;
         this.name = characterName;
@@ -143,6 +168,90 @@ class Character {
             },
             
         };
+
+        // Create experience bar
+        this.createExperienceBar();
+    }
+
+    createExperienceBar() {
+        // Create container for experience bar
+        this.expBarContainer = document.createElement('div');
+        this.expBarContainer.style.position = 'absolute';
+        this.expBarContainer.style.left = '50%';
+        this.expBarContainer.style.transform = 'translateX(-50%)';
+        this.expBarContainer.style.width = '80%';
+        this.expBarContainer.style.maxWidth = '600px';
+        this.expBarContainer.style.backgroundColor = 'rgba(44, 62, 80, 0.8)';
+        this.expBarContainer.style.padding = '10px';
+        this.expBarContainer.style.borderRadius = '5px';
+        this.expBarContainer.style.color = '#ecf0f1';
+        this.expBarContainer.style.fontFamily = 'Arial, sans-serif';
+        
+        // Create level display
+        this.levelDisplay = document.createElement('div');
+        this.levelDisplay.style.textAlign = 'center';
+        this.levelDisplay.style.fontSize = '16px';
+        this.levelDisplay.style.marginBottom = '5px';
+        this.expBarContainer.appendChild(this.levelDisplay);
+        
+        // Create bar container
+        const barContainer = document.createElement('div');
+        barContainer.style.width = '100%';
+        barContainer.style.height = '15px';
+        barContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+        barContainer.style.borderRadius = '7px';
+        barContainer.style.overflow = 'hidden';
+        this.expBarContainer.appendChild(barContainer);
+        
+        // Create progress bar
+        this.expBar = document.createElement('div');
+        this.expBar.style.width = '0%';
+        this.expBar.style.height = '100%';
+        this.expBar.style.backgroundColor = '#f1c40f';
+        this.expBar.style.transition = 'width 0.3s ease';
+        barContainer.appendChild(this.expBar);
+        
+        // Create experience text display
+        this.expText = document.createElement('div');
+        this.expText.style.textAlign = 'center';
+        this.expText.style.fontSize = '14px';
+        this.expText.style.marginTop = '5px';
+        this.expBarContainer.appendChild(this.expText);
+        
+        // Position the bar below the canvas
+        const canvas = this.grid.canvas;
+        const canvasRect = canvas.getBoundingClientRect();
+        this.expBarContainer.style.top = `${canvasRect.bottom + 10}px`;
+        
+        // Add resize handler
+        window.addEventListener('resize', () => {
+            const updatedRect = canvas.getBoundingClientRect();
+            this.expBarContainer.style.top = `${updatedRect.bottom + 10}px`;
+        });
+        
+        document.body.appendChild(this.expBarContainer);
+        
+        // Initial update
+        this.updateExperienceBar();
+    }
+
+    updateExperienceBar() {
+        if (this.level >= 20) {
+            this.levelDisplay.textContent = `Level ${this.level} (Max Level)`;
+            this.expBar.style.width = '100%';
+            this.expText.textContent = 'Maximum Level Reached';
+            return;
+        }
+
+        const currentLevelExp = this.level === 1 ? 0 : this.experienceToLevel[this.level - 1];
+        const nextLevelExp = this.experienceToLevel[this.level];
+        const expNeeded = nextLevelExp - currentLevelExp;
+        const expProgress = this.experience - currentLevelExp;
+        const percentage = (expProgress / expNeeded) * 100;
+
+        this.levelDisplay.textContent = `Level ${this.level}`;
+        this.expBar.style.width = `${percentage}%`;
+        this.expText.textContent = `${expProgress}/${expNeeded} XP to next level`;
     }
 
     // Base attack method - should be overridden by specific classes
@@ -613,13 +722,87 @@ class Character {
     }
 
     gainExperience(amount) {
-        // Simple leveling system - can be expanded later
+        if (this.level >= 20) return; // Max level reached
+
+        this.experience += amount;
+        
+        // Check if we can level up
+        while (this.level < 20 && this.experience >= this.experienceToLevel[this.level]) {
+            this.levelUp();
+        }
+
+        // Update experience bar
+        this.updateExperienceBar();
+    }
+
+    levelUp() {
         this.level += 1;
-        this.maxHealth += 20;
+        
+        // Increase stats based on level
+        this.maxHealth += Math.floor(20 + this.level * 1.5);
         this.health = this.maxHealth;
+        
         this.maxAP += 1;
         this.maxMP += 1;
+        this.attackDamage += Math.floor(this.level * 0.5);
+        
         this.resetStats();
+        
+        // Update experience bar
+        this.updateExperienceBar();
+        
+        // Show level up notification
+        this.showLevelUpNotification();
+    }
+
+    showLevelUpNotification() {
+        // Get canvas position for positioning the notification
+        const canvas = this.grid.canvas;
+        const canvasRect = canvas.getBoundingClientRect();
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.id = 'level-up-notification';
+        notification.style.position = 'absolute';
+        notification.style.top = `${canvasRect.top + 20}px`;
+        notification.style.left = `${canvasRect.left + (canvasRect.width / 2)}px`;
+        notification.style.transform = 'translateX(-50%)';
+        notification.style.backgroundColor = 'rgba(255, 215, 0, 0.9)';
+        notification.style.color = '#2c3e50';
+        notification.style.padding = '15px 30px';
+        notification.style.borderRadius = '5px';
+        notification.style.fontFamily = 'Arial, sans-serif';
+        notification.style.fontSize = '18px';
+        notification.style.fontWeight = 'bold';
+        notification.style.zIndex = '10000';
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s ease-in-out';
+        notification.textContent = `Level Up! You are now level ${this.level}!`;
+        
+        document.body.appendChild(notification);
+        
+        // Add resize listener to keep the notification positioned correctly
+        const updateNotificationPosition = () => {
+            const updatedRect = canvas.getBoundingClientRect();
+            notification.style.top = `${updatedRect.top + 20}px`;
+            notification.style.left = `${updatedRect.left + (updatedRect.width / 2)}px`;
+        };
+        
+        window.addEventListener('resize', updateNotificationPosition);
+        
+        // Fade in
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            
+            // Fade out and remove after a few seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    window.removeEventListener('resize', updateNotificationPosition);
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }, 10);
     }
 }
 
