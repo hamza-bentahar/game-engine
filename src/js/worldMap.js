@@ -7,9 +7,10 @@ class WorldMap {
         this.gridSize = 60; // Size of each grid cell in the map
         this.padding = 20;  // Padding around the map
         this.grids = new Map(); // Map to store grid information: key = "x,y", value = { name, type }
+        this.currentGridX = 0;
+        this.currentGridY = 0;
         
         this.setupCanvas();
-        this.setupKeyboardShortcut();
     }
     
     setupCanvas() {
@@ -61,10 +62,6 @@ class WorldMap {
         
         document.body.appendChild(closeButton);
         this.closeButton = closeButton;
-    }
-    
-    setupKeyboardShortcut() {
-        // No need to add event listener here, it will be added in game.js
     }
     
     // Add a grid to the world map

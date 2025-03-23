@@ -30,17 +30,6 @@ class IsometricGame {
         // Add reference to game in grid for monster AI
         this.grid.game = this;
         
-        // Initialize current grid position (0,0 is the starting grid)
-        this.currentGridX = 0;
-        this.currentGridY = 0;
-        
-        // Create world map
-        this.worldMap = new WorldMap(this);
-        this.worldMap.setCurrentGrid(this.currentGridX, this.currentGridY);
-        
-        // Add some sample grids to the world map (these would normally be loaded from a data source)
-        this.initializeWorldMap();
-        
         // Create character with selected type and name
         switch (characterType.toLowerCase()) {
             case 'mage':
@@ -57,6 +46,17 @@ class IsometricGame {
                 this.character = new Mage(this.grid, characterName);
                 break;
         }
+
+        // Initialize current grid position (0,0 is the starting grid)
+        this.currentGridX = 0;
+        this.currentGridY = 0;
+        
+        // Create world map
+        this.worldMap = new WorldMap(this);
+        this.worldMap.setCurrentGrid(this.currentGridX, this.currentGridY);
+        
+        // Add some sample grids to the world map (these would normally be loaded from a data source)
+        this.initializeWorldMap();
         
         // Initialize monsters array
         this.monsters = [];
@@ -470,31 +470,31 @@ class IsometricGame {
         drawBar(padding + (barWidth*2) + 200, 55, currentXP, nextLevelXP, '#f1c40f', 'XP');
     }
 
-    // Change to a new grid
-    changeGrid(x, y) {
-        console.log(`Changing grid to ${x},${y}`);
+    // // Change to a new grid
+    // changeGrid(x, y) {
+    //     console.log(`Changing grid to ${x},${y}`);
         
-        // Save the current grid state if needed
-        this.grid.saveLayout(this.grid.currentLayout);
+    //     // Save the current grid state if needed
+    //     this.grid.saveLayout(this.grid.currentLayout);
         
-        // Update current grid position
-        this.currentGridX = x;
-        this.currentGridY = y;
+    //     // Update current grid position
+    //     this.currentGridX = x;
+    //     this.currentGridY = y;
         
-        // Update world map
-        this.worldMap.setCurrentGrid(x, y);
+    //     // Update world map
+    //     this.worldMap.setCurrentGrid(x, y);
         
-        // Load the new grid layout
-        const gridKey = `grid_${x}_${y}`;
-        this.grid.loadLayout(gridKey);
+    //     // Load the new grid layout
+    //     const gridKey = `grid_${x}_${y}`;
+    //     this.grid.loadLayout(gridKey);
         
-        // Reset character position to center of the new grid
-        this.character.x = Math.floor(this.grid.nbRows / 2);
-        this.character.y = 0;
+    //     // Reset character position to center of the new grid
+    //     this.character.x = Math.floor(this.grid.nbRows / 2);
+    //     this.character.y = 0;
         
-        // Respawn monsters for the new grid
-        this.spawnMonsters();
-    }
+    //     // Respawn monsters for the new grid
+    //     this.spawnMonsters();
+    // }
     
     // Initialize sample grids on the world map
     initializeWorldMap() {
