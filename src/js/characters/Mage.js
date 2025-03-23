@@ -12,7 +12,7 @@ class Mage extends Character {
         this.maxMP = 2;  // Less MP due to being ranged
         this.currentMP = this.maxMP;
         this.attackRange = 3; // Longer attack range
-        this.attackDamage = 225;
+        this.attackDamage = 25;
     }
 
     // Mage-specific attack method
