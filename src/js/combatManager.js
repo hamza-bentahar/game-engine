@@ -27,6 +27,7 @@ class CombatManager {
         this.combatUI.style.color = '#ecf0f1';
         this.combatUI.style.fontFamily = 'Arial, sans-serif';
         this.combatUI.style.display = 'none';
+        this.combatUI.style.minWidth = '300px';
         
         // Create timer display
         this.timerDisplay = document.createElement('div');
@@ -43,6 +44,29 @@ class CombatManager {
         this.phaseDisplay.style.marginBottom = '15px';
         this.phaseDisplay.style.textAlign = 'center';
         this.combatUI.appendChild(this.phaseDisplay);
+
+        // Create monster stats container
+        this.monsterStats = document.createElement('div');
+        this.monsterStats.style.marginBottom = '15px';
+        this.monsterStats.style.padding = '10px';
+        this.monsterStats.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+        this.monsterStats.style.borderRadius = '3px';
+        this.combatUI.appendChild(this.monsterStats);
+
+        // Create monster name
+        this.monsterName = document.createElement('div');
+        this.monsterName.style.fontSize = '16px';
+        this.monsterName.style.fontWeight = 'bold';
+        this.monsterName.style.marginBottom = '10px';
+        this.monsterStats.appendChild(this.monsterName);
+
+        // Create monster stat bars
+        this.monsterHP = this.createStatBar('#e74c3c', 'HP');
+        this.monsterAP = this.createStatBar('#3498db', 'AP');
+        this.monsterMP = this.createStatBar('#2ecc71', 'MP');
+        this.monsterStats.appendChild(this.monsterHP.container);
+        this.monsterStats.appendChild(this.monsterAP.container);
+        this.monsterStats.appendChild(this.monsterMP.container);
         
         // Create action buttons container
         this.actionButtons = document.createElement('div');
@@ -87,11 +111,74 @@ class CombatManager {
         return button;
     }
 
+    createStatBar(color, label) {
+        const container = document.createElement('div');
+        container.style.marginBottom = '8px';
+        
+        const labelDiv = document.createElement('div');
+        labelDiv.style.fontSize = '14px';
+        labelDiv.style.marginBottom = '4px';
+        labelDiv.textContent = label;
+        container.appendChild(labelDiv);
+        
+        const barContainer = document.createElement('div');
+        barContainer.style.width = '100%';
+        barContainer.style.height = '12px';
+        barContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+        barContainer.style.borderRadius = '6px';
+        barContainer.style.overflow = 'hidden';
+        container.appendChild(barContainer);
+        
+        const bar = document.createElement('div');
+        bar.style.width = '100%';
+        bar.style.height = '100%';
+        bar.style.backgroundColor = color;
+        bar.style.transition = 'width 0.3s ease';
+        barContainer.appendChild(bar);
+        
+        const value = document.createElement('div');
+        value.style.fontSize = '12px';
+        value.style.textAlign = 'right';
+        value.style.marginTop = '2px';
+        container.appendChild(value);
+        
+        return {
+            container,
+            bar,
+            value
+        };
+    }
+
+    updateMonsterStats() {
+        if (!this.currentEnemy) return;
+
+        // Update monster name
+        this.monsterName.textContent = `${this.currentEnemy.monsterType.charAt(0).toUpperCase() + this.currentEnemy.monsterType.slice(1)}`;
+
+        // Update HP bar
+        const hpPercent = (this.currentEnemy.health / this.currentEnemy.maxHealth) * 100;
+        this.monsterHP.bar.style.width = `${hpPercent}%`;
+        this.monsterHP.value.textContent = `${this.currentEnemy.health}/${this.currentEnemy.maxHealth}`;
+
+        // Update AP bar
+        const apPercent = (this.currentEnemy.currentAP / this.currentEnemy.maxAP) * 100;
+        this.monsterAP.bar.style.width = `${apPercent}%`;
+        this.monsterAP.value.textContent = `${this.currentEnemy.currentAP}/${this.currentEnemy.maxAP}`;
+
+        // Update MP bar
+        const mpPercent = (this.currentEnemy.currentMP / this.currentEnemy.maxMP) * 100;
+        this.monsterMP.bar.style.width = `${mpPercent}%`;
+        this.monsterMP.value.textContent = `${this.currentEnemy.currentMP}/${this.currentEnemy.maxMP}`;
+    }
+
     startCombat(monster) {
         this.inCombat = true;
         this.currentEnemy = monster;
         this.currentPhase = 'preparation';
         this.combatUI.style.display = 'block';
+        
+        // Update monster stats display
+        this.updateMonsterStats();
         
         // Generate 3 starting positions
         this.generateStartingPositions();
@@ -242,6 +329,7 @@ class CombatManager {
             
             // Update UI
             this.updateAttackButton();
+            this.updateMonsterStats();
             
             // Check for combat end
             if (this.currentEnemy.health <= 0) {
@@ -291,6 +379,7 @@ class CombatManager {
             if (monster.useMP(1) && !this.game.grid.hasObstacle(newX, newY)) {
                 monster.x = newX;
                 monster.y = newY;
+                this.updateMonsterStats();
             }
         }
         
@@ -298,6 +387,7 @@ class CombatManager {
         if (this.isInAttackRange() && monster.useAP(6)) {
             const damage = 15; // Base monster damage
             character.takeDamage(damage);
+            this.updateMonsterStats();
             
             // Check for combat end
             if (character.health <= 0) {
