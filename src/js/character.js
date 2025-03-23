@@ -13,7 +13,7 @@ class Character {
         this.path = []; // Store the path
         this.currentResizeHandler = null; // Store the current resize handler
 
-        // Character stats
+        // Base character stats - these will be overridden by specific classes
         this.level = 1;
         this.maxHealth = 100;
         this.health = this.maxHealth;
@@ -21,6 +21,8 @@ class Character {
         this.currentAP = this.maxAP;
         this.maxMP = 3;
         this.currentMP = this.maxMP;
+        this.attackRange = 1;
+        this.attackDamage = 20;
 
         // Character info
         this.characterType = characterType;
@@ -39,9 +41,8 @@ class Character {
         this.scale = 2.5;
         this.verticalOffset = 32;
 
-        // Animation frames mapping (based on standard LPC spritesheet format)
+        // Base animation frames mapping
         this.animations = {
-            // Format: [startX, startY, frames, frameDuration]
             'idle': {
                 'down':  [0, 0, 1, 100],
                 'left':  [0, 1, 1, 100],
@@ -55,6 +56,14 @@ class Character {
                 'up':    [0, 8, 8, 120]
             }
         };
+    }
+
+    // Base attack method - should be overridden by specific classes
+    attack(target) {
+        if (this.useAP(6)) {
+            return this.attackDamage;
+        }
+        return 0;
     }
 
     // Adjust movement speed
