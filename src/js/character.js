@@ -168,6 +168,9 @@ class Character {
             },
             
         };
+
+        // Create position display
+        this.createPositionDisplay();
     }
 
     // Base attack method - should be overridden by specific classes
@@ -382,12 +385,14 @@ class Character {
                         });
                     }
                 }
+                this.updatePositionDisplay();
                 return;
             }
 
             const angle = Math.atan2(dy, dx);
             this.x += Math.cos(angle) * this.moveSpeed;
             this.y += Math.sin(angle) * this.moveSpeed;
+            this.updatePositionDisplay();
         }
 
         // Update animation
@@ -709,6 +714,28 @@ class Character {
                 }, 300);
             }, 3000);
         }, 10);
+    }
+
+    createPositionDisplay() {
+        this.positionDisplay = document.createElement('div');
+        this.positionDisplay.style.position = 'fixed';
+        this.positionDisplay.style.bottom = '20px';
+        this.positionDisplay.style.left = '20px';
+        this.positionDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        this.positionDisplay.style.color = 'white';
+        this.positionDisplay.style.padding = '10px';
+        this.positionDisplay.style.borderRadius = '5px';
+        this.positionDisplay.style.fontFamily = 'Arial, sans-serif';
+        this.positionDisplay.style.fontSize = '14px';
+        this.positionDisplay.style.zIndex = '1000';
+        document.body.appendChild(this.positionDisplay);
+        this.updatePositionDisplay();
+    }
+    
+    updatePositionDisplay() {
+        const x = Math.round(this.x);
+        const y = Math.round(this.y);
+        this.positionDisplay.textContent = `Current Position: (${x}, ${y}) - ${this.grid.currentLayout}`;
     }
 }
 

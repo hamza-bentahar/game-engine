@@ -46,17 +46,6 @@ class IsometricGame {
                 this.character = new Mage(this.grid, characterName);
                 break;
         }
-
-        // Initialize current grid position (0,0 is the starting grid)
-        this.currentGridX = 0;
-        this.currentGridY = 0;
-        
-        // Create world map
-        this.worldMap = new WorldMap(this);
-        this.worldMap.setCurrentGrid(this.currentGridX, this.currentGridY);
-        
-        // Add some sample grids to the world map (these would normally be loaded from a data source)
-        this.initializeWorldMap();
         
         // Initialize monsters array
         this.monsters = [];
@@ -76,6 +65,9 @@ class IsometricGame {
         
         // Create combat manager
         this.combatManager = new CombatManager(this);
+        
+        // Initialize world map
+        this.worldMap = new WorldMap(this);
         
         // Bind methods
         this.render = this.render.bind(this);
@@ -127,9 +119,6 @@ class IsometricGame {
             } else if (event.key === 'j') {
                 // Trigger casting animation in current direction
                 this.character.setAnimation('jump', this.character.currentDirection);
-            } else if (event.key === 'm' || event.key === 'M') {
-                // Toggle world map
-                this.worldMap.toggle();
             }
         });
 
@@ -228,14 +217,11 @@ class IsometricGame {
         // Convert mouse position to grid coordinates
         const gridPos = this.grid.toGrid(mouseX, mouseY);
         
-        // If in edit mode, set the selected tile and return
+        // If in edit mode, handle tile selection for nextGrid
         if (this.grid.editMode) {
-            // Update the selected tile key for nextGrid editing
-            const tileKey = `${gridPos.x},${gridPos.y}`;
-            // Only select the tile if it exists in the grid
-            if (this.grid.tiles.has(tileKey)) {
-                this.grid.setSelectedTile(tileKey);
-            }
+            const key = `${gridPos.x},${gridPos.y}`;
+            this.grid.selectedTileKey = key;
+            this.controlPanel.updateNextGridUI();
             return;
         }
         
@@ -298,9 +284,6 @@ class IsometricGame {
         
         // Render stats
         this.renderStats();
-        
-        // Display current grid indicator
-        this.displayCurrentGrid();
         
         // Request next frame
         requestAnimationFrame(this.render.bind(this));
@@ -468,90 +451,6 @@ class IsometricGame {
         
         // Use gold/yellow color for XP bar
         drawBar(padding + (barWidth*2) + 200, 55, currentXP, nextLevelXP, '#f1c40f', 'XP');
-    }
-
-    // // Change to a new grid
-    // changeGrid(x, y) {
-    //     console.log(`Changing grid to ${x},${y}`);
-        
-    //     // Save the current grid state if needed
-    //     this.grid.saveLayout(this.grid.currentLayout);
-        
-    //     // Update current grid position
-    //     this.currentGridX = x;
-    //     this.currentGridY = y;
-        
-    //     // Update world map
-    //     this.worldMap.setCurrentGrid(x, y);
-        
-    //     // Load the new grid layout
-    //     const gridKey = `grid_${x}_${y}`;
-    //     this.grid.loadLayout(gridKey);
-        
-    //     // Reset character position to center of the new grid
-    //     this.character.x = Math.floor(this.grid.nbRows / 2);
-    //     this.character.y = 0;
-        
-    //     // Respawn monsters for the new grid
-    //     this.spawnMonsters();
-    // }
-    
-    // Initialize sample grids on the world map
-    initializeWorldMap() {
-        // Add current grid
-        this.worldMap.addGrid(0, 0, "Starting Area");
-        
-        // Add some neighboring grids
-        this.worldMap.addGrid(1, 0, "Eastern Forest", "normal");
-        this.worldMap.addGrid(-1, 0, "Western Plains", "normal");
-        this.worldMap.addGrid(0, 1, "Northern Hills", "normal");
-        this.worldMap.addGrid(0, -1, "Southern Marsh", "normal");
-        
-        // Add a town grid
-        this.worldMap.addGrid(2, 1, "Eastwood Village", "town");
-        
-        // Add a dungeon grid
-        this.worldMap.addGrid(-2, -1, "Dark Caverns", "dungeon");
-        
-        // Add a special grid
-        this.worldMap.addGrid(1, -2, "Ancient Ruins", "special");
-    }
-
-    // Function to display the current grid name/position
-    displayCurrentGrid() {
-        const gridName = this.getGridName(this.currentGridX, this.currentGridY);
-        
-        // Create or update grid indicator
-        let indicator = document.getElementById('current-grid-indicator');
-        if (!indicator) {
-            indicator = document.createElement('div');
-            indicator.id = 'current-grid-indicator';
-            indicator.style.position = 'absolute';
-            indicator.style.top = '10px';
-            indicator.style.left = '10px';
-            indicator.style.padding = '5px 10px';
-            indicator.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-            indicator.style.color = 'white';
-            indicator.style.fontFamily = 'Arial, sans-serif';
-            indicator.style.fontSize = '14px';
-            indicator.style.borderRadius = '4px';
-            indicator.style.zIndex = '100';
-            document.body.appendChild(indicator);
-        }
-        
-        indicator.textContent = `Current Location: ${gridName} (${this.currentGridX}, ${this.currentGridY})`;
-    }
-    
-    // Get grid name from coordinates
-    getGridName(x, y) {
-        // Try to get grid info from world map
-        const gridInfo = this.worldMap.grids.get(`${x},${y}`);
-        if (gridInfo && gridInfo.name) {
-            return gridInfo.name;
-        }
-        
-        // Default name if not found
-        return `Grid ${x},${y}`;
     }
 }
 
