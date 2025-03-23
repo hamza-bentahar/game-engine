@@ -431,6 +431,14 @@ class IsometricGame {
         
         // Draw MP bar
         drawBar(padding + barWidth + 100, 55, this.character.currentMP, this.character.maxMP, '#2ecc71', 'MP');
+
+        // Draw XP bar
+        // Get the current XP and the XP needed for next level
+        const currentXP = this.character.experience;
+        const nextLevelXP = this.character.level < 20 ? this.character.experienceToLevel[this.character.level] : this.character.experience;
+        
+        // Use gold/yellow color for XP bar
+        drawBar(padding + (barWidth*2) + 200, 55, currentXP, nextLevelXP, '#f1c40f', 'XP');
     }
 }
 

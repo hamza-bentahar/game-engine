@@ -168,90 +168,6 @@ class Character {
             },
             
         };
-
-        // Create experience bar
-        this.createExperienceBar();
-    }
-
-    createExperienceBar() {
-        // Create container for experience bar
-        this.expBarContainer = document.createElement('div');
-        this.expBarContainer.style.position = 'absolute';
-        this.expBarContainer.style.left = '50%';
-        this.expBarContainer.style.transform = 'translateX(-50%)';
-        this.expBarContainer.style.width = '80%';
-        this.expBarContainer.style.maxWidth = '600px';
-        this.expBarContainer.style.backgroundColor = 'rgba(44, 62, 80, 0.8)';
-        this.expBarContainer.style.padding = '10px';
-        this.expBarContainer.style.borderRadius = '5px';
-        this.expBarContainer.style.color = '#ecf0f1';
-        this.expBarContainer.style.fontFamily = 'Arial, sans-serif';
-        
-        // Create level display
-        this.levelDisplay = document.createElement('div');
-        this.levelDisplay.style.textAlign = 'center';
-        this.levelDisplay.style.fontSize = '16px';
-        this.levelDisplay.style.marginBottom = '5px';
-        this.expBarContainer.appendChild(this.levelDisplay);
-        
-        // Create bar container
-        const barContainer = document.createElement('div');
-        barContainer.style.width = '100%';
-        barContainer.style.height = '15px';
-        barContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
-        barContainer.style.borderRadius = '7px';
-        barContainer.style.overflow = 'hidden';
-        this.expBarContainer.appendChild(barContainer);
-        
-        // Create progress bar
-        this.expBar = document.createElement('div');
-        this.expBar.style.width = '0%';
-        this.expBar.style.height = '100%';
-        this.expBar.style.backgroundColor = '#f1c40f';
-        this.expBar.style.transition = 'width 0.3s ease';
-        barContainer.appendChild(this.expBar);
-        
-        // Create experience text display
-        this.expText = document.createElement('div');
-        this.expText.style.textAlign = 'center';
-        this.expText.style.fontSize = '14px';
-        this.expText.style.marginTop = '5px';
-        this.expBarContainer.appendChild(this.expText);
-        
-        // Position the bar below the canvas
-        const canvas = this.grid.canvas;
-        const canvasRect = canvas.getBoundingClientRect();
-        this.expBarContainer.style.top = `${canvasRect.bottom + 10}px`;
-        
-        // Add resize handler
-        window.addEventListener('resize', () => {
-            const updatedRect = canvas.getBoundingClientRect();
-            this.expBarContainer.style.top = `${updatedRect.bottom + 10}px`;
-        });
-        
-        document.body.appendChild(this.expBarContainer);
-        
-        // Initial update
-        this.updateExperienceBar();
-    }
-
-    updateExperienceBar() {
-        if (this.level >= 20) {
-            this.levelDisplay.textContent = `Level ${this.level} (Max Level)`;
-            this.expBar.style.width = '100%';
-            this.expText.textContent = 'Maximum Level Reached';
-            return;
-        }
-
-        const currentLevelExp = this.level === 1 ? 0 : this.experienceToLevel[this.level - 1];
-        const nextLevelExp = this.experienceToLevel[this.level];
-        const expNeeded = nextLevelExp - currentLevelExp;
-        const expProgress = this.experience - currentLevelExp;
-        const percentage = (expProgress / expNeeded) * 100;
-
-        this.levelDisplay.textContent = `Level ${this.level}`;
-        this.expBar.style.width = `${percentage}%`;
-        this.expText.textContent = `${expProgress}/${expNeeded} XP to next level`;
     }
 
     // Base attack method - should be overridden by specific classes
@@ -730,9 +646,6 @@ class Character {
         while (this.level < 20 && this.experience >= this.experienceToLevel[this.level]) {
             this.levelUp();
         }
-
-        // Update experience bar
-        this.updateExperienceBar();
     }
 
     levelUp() {
@@ -747,10 +660,6 @@ class Character {
         this.attackDamage += Math.floor(this.level * 0.5);
         
         this.resetStats();
-        
-        // Update experience bar
-        this.updateExperienceBar();
-        
         // Show level up notification
         this.showLevelUpNotification();
     }
