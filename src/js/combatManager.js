@@ -180,6 +180,13 @@ class CombatManager {
         // Set character to combat-idle animation
         this.game.character.setAnimation('combat-idle', this.game.character.currentDirection);
         
+        // Hide all monsters except the current enemy
+        this.game.monsters.forEach(m => {
+            if (m !== monster) {
+                m.isVisible = false;
+            }
+        });
+        
         // Update monster stats display
         this.updateMonsterStats();
         
@@ -406,6 +413,11 @@ class CombatManager {
         this.inCombat = false;
         this.combatUI.style.display = 'none';
         clearTimeout(this.turnTimer);
+        
+        // Show all surviving monsters again
+        this.game.monsters.forEach(m => {
+            m.isVisible = true;
+        });
         
         if (playerWon) {
             // Remove defeated monster

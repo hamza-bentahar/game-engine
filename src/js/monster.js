@@ -43,6 +43,8 @@ class Monster extends Character {
             }
         };
 
+        this.isVisible = true;  // Add visibility flag
+
         console.log(`Monster created: ${monsterType}, Sprite path: ${this.spriteSheet.src}`);
     }
 
@@ -72,6 +74,8 @@ class Monster extends Character {
     }
 
     draw(ctx) {
+        if (!this.isAlive || !this.isVisible) return;  // Don't draw if not visible
+
         if (!this.isAlive) {
             // Add transparency for death animation
             ctx.globalAlpha = 0.7;
