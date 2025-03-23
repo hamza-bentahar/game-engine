@@ -448,6 +448,11 @@ export class ControlPanel {
         yInput.id = 'nextGridYInput';
         yInput.style.width = '50px';
         
+        // Store the selectedTileDisplay and inputs as properties
+        this.selectedTileDisplay = selectedTileDisplay;
+        this.nextGridXInput = xInput;
+        this.nextGridYInput = yInput;
+        
         // Assemble coordinate inputs
         coordInputsContainer.appendChild(xLabel);
         coordInputsContainer.appendChild(xInput);
@@ -491,33 +496,6 @@ export class ControlPanel {
             }
         });
         
-        // Add click handler to update input fields
-        this.grid.canvas.addEventListener('click', (event) => {
-            // Only update the nextGrid inputs when in edit mode
-            if (!this.grid.editMode) return;
-            
-            // Update the selected tile display
-            if (this.grid.selectedTileKey) {
-                const [tileX, tileY] = this.grid.selectedTileKey.split(',').map(Number);
-                selectedTileDisplay.textContent = `Selected Tile: (${tileX}, ${tileY})`;
-                
-                // Update input fields with current nextGrid value
-                const nextGrid = this.grid.getNextGrid(tileX, tileY);
-                if (nextGrid) {
-                    const [nextX, nextY] = nextGrid.split(',').map(Number);
-                    xInput.value = nextX;
-                    yInput.value = nextY;
-                } else {
-                    xInput.value = '';
-                    yInput.value = '';
-                }
-            } else {
-                selectedTileDisplay.textContent = 'No tile selected';
-                xInput.value = '';
-                yInput.value = '';
-            }
-        });
-        
         // Assemble next grid buttons
         nextGridButtonsContainer.appendChild(setNextGridButton);
         nextGridButtonsContainer.appendChild(clearNextGridButton);
@@ -554,6 +532,32 @@ export class ControlPanel {
             }
             selector.appendChild(option);
         });
+    }
+
+    updateNextGridUI() {
+        if (!this.selectedTileDisplay || !this.nextGridXInput || !this.nextGridYInput) {
+            return;
+        }
+        
+        if (this.grid.selectedTileKey) {
+            const [tileX, tileY] = this.grid.selectedTileKey.split(',').map(Number);
+            this.selectedTileDisplay.textContent = `Selected Tile: (${tileX}, ${tileY})`;
+            
+            // Update input fields with current nextGrid value
+            const nextGrid = this.grid.getNextGrid(tileX, tileY);
+            if (nextGrid) {
+                const [nextX, nextY] = nextGrid.split(',').map(Number);
+                this.nextGridXInput.value = nextX;
+                this.nextGridYInput.value = nextY;
+            } else {
+                this.nextGridXInput.value = '';
+                this.nextGridYInput.value = '';
+            }
+        } else {
+            this.selectedTileDisplay.textContent = 'No tile selected';
+            this.nextGridXInput.value = '';
+            this.nextGridYInput.value = '';
+        }
     }
 
     setVisibility(visible) {

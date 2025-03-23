@@ -341,16 +341,37 @@ class IsometricGrid {
         
         // Reset selected tile when exiting edit mode
         if (!this.editMode) {
-            this.selectedTileKey = null;
-            
-            // Hide the selected tile indicator
-            const indicator = document.getElementById('selected-tile-indicator');
-            if (indicator) {
-                indicator.style.display = 'none';
-            }
+            this.setSelectedTile(null);
         }
         
         return this.editMode;
+    }
+
+    // Set the selected tile for nextGrid editing
+    setSelectedTile(tileKey) {
+        // Clear previous selection
+        if (this.selectedTileKey) {
+            const previousTile = this.tiles.get(this.selectedTileKey);
+            if (previousTile) {
+                previousTile.setSelected(false);
+            }
+        }
+        
+        // Set new selection
+        this.selectedTileKey = tileKey;
+        
+        if (tileKey) {
+            const selectedTile = this.tiles.get(tileKey);
+            if (selectedTile) {
+                selectedTile.setSelected(true);
+                console.log(`Selected tile: ${tileKey}`);
+            }
+        }
+        
+        // Update the control panel if we have a reference to it
+        if (this.game && this.game.controlPanel) {
+            this.game.controlPanel.updateNextGridUI();
+        }
     }
 
     // Get list of available layouts

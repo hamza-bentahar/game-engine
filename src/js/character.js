@@ -652,11 +652,8 @@ class Character {
         this.level += 1;
         
         // Increase stats based on level
-        this.maxHealth += Math.floor(20 + this.level * 1.5);
+        this.maxHealth += Math.floor(20);
         this.health = this.maxHealth;
-        
-        this.maxAP += 1;
-        this.maxMP += 1;
         this.attackDamage += Math.floor(this.level * 0.5);
         
         this.resetStats();

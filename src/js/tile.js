@@ -6,6 +6,7 @@ class Tile {
         this.isObstacle = isObstacle;
         this.heightOffset = 0;
         this.isHovered = false;
+        this.isSelected = false;
         this.nextGrid = nextGrid;
     }
 
@@ -49,6 +50,19 @@ class Tile {
             // Reset shadow effects after drawing
             ctx.shadowColor = 'transparent';
             ctx.shadowBlur = 0;
+            
+            // Draw selection indicator if selected
+            if (this.isSelected) {
+                ctx.strokeStyle = 'rgb(255, 0, 255)'; // Magenta color for selection
+                ctx.lineWidth = 3;
+                ctx.strokeRect(
+                    drawX, 
+                    drawY, 
+                    tileWidth, 
+                    tileHeight * 2
+                );
+                ctx.lineWidth = 1;
+            }
         } else {
             // Draw geometric shape
             ctx.beginPath();
@@ -95,8 +109,8 @@ class Tile {
             ctx.fill();
             
             // Draw outline
-            ctx.strokeStyle = strokeColor;
-            ctx.lineWidth = this.isHovered ? 2 : 1;
+            ctx.strokeStyle = this.isSelected ? 'rgb(255, 0, 255)' : strokeColor; // Magenta for selected
+            ctx.lineWidth = this.isSelected ? 3 : (this.isHovered ? 2 : 1);
             ctx.stroke();
             
             // Reset shadow effects
@@ -134,6 +148,11 @@ class Tile {
     // Set hover state
     setHovered(hovered) {
         this.isHovered = hovered;
+    }
+    
+    // Set selected state
+    setSelected(selected) {
+        this.isSelected = selected;
     }
 
     // Get string key for storage
