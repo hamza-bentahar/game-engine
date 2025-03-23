@@ -2,6 +2,7 @@ import { Character } from './character.js';
 import { Monster } from './monster.js';
 import { IsometricGrid } from './grid.js';
 import { ControlPanel } from './controlPanel.js';
+import { CombatManager } from './combatManager.js';
 
 class IsometricGame {
     constructor(characterType = 'mage', characterName = 'Adventurer') {
@@ -43,6 +44,9 @@ class IsometricGame {
         
         // Add isPlacingObstacle property to grid
         this.grid.isPlacingObstacle = false;
+        
+        // Create combat manager
+        this.combatManager = new CombatManager(this);
         
         // Bind methods
         this.render = this.render.bind(this);
@@ -174,61 +178,58 @@ class IsometricGame {
         }
     }
     
-    // Handle click for character movement and nextGrid selection
+    // Handle click for character movement and combat initiation
     handleClick(event) {
         const rect = this.canvas.getBoundingClientRect();
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
         
+        // Convert mouse position to grid coordinates
         const gridPos = this.grid.toGrid(mouseX, mouseY);
         
-        // If in edit mode, select the tile for nextGrid editing
-        if (this.grid.editMode) {
-            // Update the selected tile
-            if (this.grid.selectedTileKey) {
-                const prevTile = this.grid.tiles.get(this.grid.selectedTileKey);
-                if (prevTile) {
-                    // Reset any visual indicators for the previously selected tile
-                }
+        // Check if we clicked a monster
+        if (!this.combatManager.inCombat) {
+            const clickedMonster = this.monsters.find(monster => {
+                return Math.round(monster.x) === gridPos.x && Math.round(monster.y) === gridPos.y;
+            });
+            
+            if (clickedMonster) {
+                this.combatManager.startCombat(clickedMonster);
+                return;
             }
+        }
+        
+        // If in combat and it's player's turn, handle movement based on MP
+        if (this.combatManager.inCombat && 
+            this.combatManager.currentPhase === 'playerTurn') {
+            const dx = gridPos.x - Math.round(this.character.x);
+            const dy = gridPos.y - Math.round(this.character.y);
+            const distance = Math.abs(dx) + Math.abs(dy); // Manhattan distance
             
-            // Set the new selected tile
-            this.grid.selectedTileKey = `${gridPos.x},${gridPos.y}`;
-            
-            // Show a visual indicator for the selected tile
-            const selectedIndicator = document.getElementById('selected-tile-indicator');
-            if (!selectedIndicator) {
-                const newIndicator = document.createElement('div');
-                newIndicator.id = 'selected-tile-indicator';
-                newIndicator.style.position = 'absolute';
-                newIndicator.style.fontSize = '16px';
-                newIndicator.style.color = '#f1c40f'; // Yellow
-                newIndicator.style.textShadow = '0 0 5px black';
-                newIndicator.style.pointerEvents = 'none';
-                newIndicator.style.zIndex = '9998';
-                document.body.appendChild(newIndicator);
+            if (distance <= this.character.currentMP && 
+                !this.grid.hasObstacle(gridPos.x, gridPos.y)) {
+                // Use MP for movement
+                this.character.useMP(distance);
+                // Move character instantly in combat
+                this.character.x = gridPos.x;
+                this.character.y = gridPos.y;
+                // Update attack button availability
+                this.combatManager.updateAttackButton();
             }
-            
-            const indicator = document.getElementById('selected-tile-indicator');
-            const tilePos = this.grid.toScreen(gridPos.x, gridPos.y);
-            indicator.style.left = `${tilePos.x}px`;
-            indicator.style.top = `${tilePos.y - 30}px`;
-            indicator.textContent = '⬇️';
-            indicator.style.display = 'block';
-        } else {
-            // In game mode, move the character
+            return;
+        }
+        
+        // Normal movement outside of combat
+        if (!this.combatManager.inCombat) {
             this.character.moveTo(gridPos.x, gridPos.y);
-            
-            // Hide the selected tile indicator
-            const indicator = document.getElementById('selected-tile-indicator');
-            if (indicator) {
-                indicator.style.display = 'none';
-            }
         }
     }
     
     // Main render loop
     render() {
+        // Clear the canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
         // Render main game
         this.grid.render();
         
@@ -247,7 +248,7 @@ class IsometricGame {
         this.renderStats();
         
         // Request next frame
-        requestAnimationFrame(this.render);
+        requestAnimationFrame(this.render.bind(this));
     }
     
     // Handle resize
