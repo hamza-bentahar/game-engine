@@ -299,11 +299,21 @@ class Character {
         // Check if special animation has ended
         if (this.isInSpecialAnimation && performance.now() >= this.specialAnimationEndTime) {
             this.isInSpecialAnimation = false;
-            this.setAnimation('idle', this.currentDirection);
+            // If in combat, return to combat-idle instead of regular idle
+            if (this.grid.game.combatManager.inCombat) {
+                this.setAnimation('combat-idle', this.currentDirection);
+            } else {
+                this.setAnimation('idle', this.currentDirection);
+            }
         }
 
         if (!this.isMoving && !this.isInSpecialAnimation) {
-            this.setAnimation('idle', this.currentDirection);
+            // Use combat-idle during combat, regular idle otherwise
+            if (this.grid.game.combatManager.inCombat) {
+                this.setAnimation('combat-idle', this.currentDirection);
+            } else {
+                this.setAnimation('idle', this.currentDirection);
+            }
         }
 
         if (this.isMoving && !this.isInSpecialAnimation) {

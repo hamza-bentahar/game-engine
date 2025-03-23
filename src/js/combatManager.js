@@ -177,6 +177,9 @@ class CombatManager {
         this.currentPhase = 'preparation';
         this.combatUI.style.display = 'block';
         
+        // Set character to combat-idle animation
+        this.game.character.setAnimation('combat-idle', this.game.character.currentDirection);
+        
         // Update monster stats display
         this.updateMonsterStats();
         
