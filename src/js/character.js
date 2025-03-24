@@ -25,6 +25,18 @@ class Character {
         this.currentMP = this.maxMP;
         this.attackRange = 1;
         this.attackDamage = 20;
+        this.strength = 0;
+        this.agility = 0;
+        this.intelligence = 0;
+        this.luck = 0;
+        this.power = 0;
+
+        this.fireResistance = 0;
+        this.waterResistance = 0;
+        this.earthResistance = 0;
+        this.airResistance = 0;
+        
+        
 
         // Experience system
         this.experience = 0;
@@ -168,6 +180,29 @@ class Character {
             },
             
         };
+    }
+
+    computeDamage(minDamage, maxDamage, element, target) {
+        const base= Math.floor(Math.random() * (maxDamage - minDamage + 1)) + minDamage;
+        const elementMultipliers = {
+            fire: this.intelligence,
+            water: this.luck,
+            earth: this.strength,
+            air: this.agility
+        };
+        const elementResistances = {
+            fire: target.fireResistance,
+            water: target.waterResistance,
+            earth: target.earthResistance,
+            air: target.airResistance
+        };
+        let elementMultiplier = elementMultipliers[element] || 0;
+        let elementResistance = elementResistances[element] || 0;
+
+        const multiplier = (100 + elementMultiplier + this.power) / 100;
+        const damage = base * multiplier * (1 - (elementResistance/100));
+        console.log('Damage: ' + damage);
+        return damage;
     }
 
     // Base attack method - should be overridden by specific classes
@@ -630,7 +665,52 @@ class Character {
 
     takeDamage(amount) {
         this.health = Math.max(0, this.health - amount);
+        // Show damage text
+        this.showDamageText(amount);
         return this.health > 0;
+    }
+
+    showDamageText(amount) {
+        // Get screen coordinates for the character
+        const { x: screenX, y: screenY } = this.grid.toScreen(this.x, this.y);
+        
+        // Create damage text element
+        const damageText = document.createElement('div');
+        damageText.style.position = 'absolute';
+        damageText.style.left = `${screenX}px`;
+        damageText.style.top = `${screenY - 60}px`; // Position above health bar
+        damageText.style.color = '#ff3333';
+        damageText.style.fontFamily = 'Arial, sans-serif';
+        damageText.style.fontSize = '40px';
+        damageText.style.fontWeight = 'bold';
+        damageText.style.textShadow = '2px 2px 2px rgba(0,0,0,0.5)';
+        damageText.style.zIndex = '10000';
+        damageText.style.transition = 'all 3s ease-out';
+        damageText.style.pointerEvents = 'none'; // Make sure it doesn't interfere with clicks
+        damageText.textContent = `-${amount}`;
+        
+        document.body.appendChild(damageText);
+        
+        // Add resize listener to keep the damage text positioned correctly
+        const updateDamagePosition = () => {
+            const { x: updatedX, y: updatedY } = this.grid.toScreen(this.x, this.y);
+            damageText.style.left = `${updatedX}px`;
+            damageText.style.top = `${updatedY - 60}px`;
+        };
+        
+        window.addEventListener('resize', updateDamagePosition);
+        
+        // Animate the damage text
+        requestAnimationFrame(() => {
+            damageText.style.transform = 'translateY(-30px)';
+            damageText.style.opacity = '0';
+        });
+        
+        // Remove the element after animation
+        setTimeout(() => {
+            window.removeEventListener('resize', updateDamagePosition);
+            damageText.remove();
+        }, 1000);
     }
 
     heal(amount) {

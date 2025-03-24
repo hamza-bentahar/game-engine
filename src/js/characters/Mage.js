@@ -17,11 +17,10 @@ class Mage extends Character {
 
     // Mage-specific attack method
     attack(target) {
-        console.log('Mage attacking');
         if (this.useAP(6)) {
             // Magical attack animation
             this.setAnimation('cast', this.currentDirection);
-            return this.attackDamage;
+            return this.computeDamage(10, 30, 'fire', target);
         }
         return 0;
     }
