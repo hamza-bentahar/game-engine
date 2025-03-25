@@ -3,6 +3,7 @@ import { Mage } from './characters/Mage.js';
 import { Warrior } from './characters/Warrior.js';
 import { Rogue } from './characters/Rogue.js';
 import { Dragon } from './dragon.js';
+import { Minotaur } from './minotaur.js';
 import { IsometricGrid } from './grid.js';
 import { ControlPanel } from './controlPanel.js';
 import { CombatManager } from './combatManager.js';
@@ -383,7 +384,15 @@ class IsometricGame {
     }
     
     addMonster(type, position) {
-        const monster = new Dragon(this.grid, type);
+        let monster;
+        if (type === 'dragon') {
+            monster = new Dragon(this.grid, type);
+        } else if (type === 'minotaur') {
+            monster = new Minotaur(this.grid, type);
+        } else {
+            console.warn(`Unknown monster type: ${type}`);
+            return;
+        }
         monster.x = position.x;
         monster.y = position.y;
         console.log(`Spawned ${type} monster at (${monster.x}, ${monster.y})`);
