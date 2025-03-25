@@ -645,6 +645,7 @@ class Character {
     resetStats() {
         this.currentAP = this.maxAP;
         this.currentMP = this.maxMP;
+        this.health = this.maxHealth;
     }
 
     useAP(amount) {
@@ -711,6 +712,10 @@ class Character {
             window.removeEventListener('resize', updateDamagePosition);
             damageText.remove();
         }, 1000);
+    }
+
+    resetHealth() {
+        this.health = this.maxHealth;
     }
 
     heal(amount) {

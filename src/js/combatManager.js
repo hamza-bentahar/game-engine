@@ -9,6 +9,7 @@ class CombatManager {
         this.startingPositions = [];
         this.selectedStartPosition = null;
         this.timerStartTime = null;
+        this.turnCounter = 0;
         
         // Create combat UI
         this.createCombatUI();
@@ -292,7 +293,8 @@ class CombatManager {
         this.startPlayerTurn();
     }
 
-    startPlayerTurn() {
+    startPlayerTurn() { 
+        this.turnCounter++;
         this.currentPhase = 'playerTurn';
         this.updatePhaseDisplay();
         
@@ -418,6 +420,8 @@ class CombatManager {
         this.game.monsters.forEach(m => {
             m.isVisible = true;
         });
+
+        this.game.character.resetStats();
         
         if (playerWon) {
             // Remove defeated monster
@@ -428,13 +432,11 @@ class CombatManager {
             const levelDifference = this.currentEnemy.level - this.game.character.level;
             const experienceMultiplier = Math.max(0.5, 1 + (levelDifference * 0.1));
             const experienceGained = Math.floor(baseExperience * this.currentEnemy.level * experienceMultiplier);
+            console.log('Experience gained: ' + experienceGained);
 
-            // Give experience to player after alert is dismissed
             this.game.character.gainExperience(experienceGained);
-            this.game.character.updateExperienceBar(true);
             
-            // First show the alert before updating experience
-            alert(`Victory! You defeated the monster and gained ${experienceGained} experience!`);
+            alert(`Victory! You defeated the monster in ${this.turnCounter} turns and gained ${experienceGained} experience!`);
         } else {
             alert('Defeat! The monster has defeated you!');
             // Optionally reset the game or implement game over screen
