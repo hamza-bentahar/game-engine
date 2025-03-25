@@ -6,7 +6,8 @@ class Minotaur extends Monster {
         super(grid, `${monsterType}`);
         
         this.monsterType = monsterType;
-        this.health = 100;
+        this.maxHealth = 30;
+        this.health = this.maxHealth;
         this.isAlive = true;
         this.isAggressive = true;
         this.detectionRange = 5; // How many tiles away the monster can detect the player

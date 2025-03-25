@@ -14,17 +14,6 @@ class Rogue extends Character {
         this.attackRange = 2; // Medium range for throwing daggers
         this.attackDamage = 20;
         this.criticalChance = 0.2; // 20% chance for critical hit
-        
-        // Rogue-specific animations
-        this.animations = {
-            ...this.animations,
-            'throw': {
-                'down':  [0, 4, 5, 100],
-                'left':  [0, 5, 5, 100],
-                'right': [0, 6, 5, 100],
-                'up':    [0, 7, 5, 100]
-            }
-        };
 
         // Rogue moves faster
         this.moveSpeed = 0.07;

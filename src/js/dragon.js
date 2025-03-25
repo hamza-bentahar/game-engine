@@ -1,9 +1,9 @@
-import { Character } from './character.js';
+import { Monster } from './monster.js';
 
-class Dragon extends Character {
+class Dragon extends Monster {
     constructor(grid, monsterType = 'dragon') {
         // Call parent constructor with monster-specific sprite
-        super(grid, `${monsterType}_monster`);
+        super(grid, `${monsterType}`);
         
         this.monsterType = monsterType;
         this.maxHealth = 30;

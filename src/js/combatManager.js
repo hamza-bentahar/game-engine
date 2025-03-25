@@ -184,6 +184,7 @@ class CombatManager {
         // Hide all monsters except the current enemy
         this.game.monsters.forEach(m => {
             if (m !== monster) {
+                console.log('Hiding monster: ' + m.monsterType);
                 m.isVisible = false;
             }
         });

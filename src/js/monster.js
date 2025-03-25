@@ -54,14 +54,14 @@ class Monster extends Character {
         ctx.globalAlpha = 1.0;
 
         // Draw health bar if monster is alive and has taken damage
-        if (this.isAlive && this.health < 100) {
+        if (this.isAlive && this.health < this.maxHealth) {
             // Health bar background
             ctx.fillStyle = '#ff0000';
             ctx.fillRect(screenX - 25, screenY - 40, 50, 5);
             
             // Health bar fill
             ctx.fillStyle = '#00ff00';
-            ctx.fillRect(screenX - 25, screenY - 40, (this.health / 100) * 50, 5);
+            ctx.fillRect(screenX - 25, screenY - 40, (this.health / this.maxHealth) * 50, 5);
         }
 
         // Draw debug box around monster
