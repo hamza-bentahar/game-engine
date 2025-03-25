@@ -7,20 +7,19 @@ class Mage extends Character {
         // Mage-specific stats
         this.maxHealth = 80;
         this.health = this.maxHealth;
-        this.maxAP = 8;  // More AP for spells
+        this.maxAP = 6;  // More AP for spells
         this.currentAP = this.maxAP;
-        this.maxMP = 2;  // Less MP due to being ranged
+        this.maxMP = 3;  // Less MP due to being ranged
         this.currentMP = this.maxMP;
-        this.attackRange = 3; // Longer attack range
-        this.attackDamage = 25;
+        this.attackRange = 5; // Longer attack range
     }
 
     // Mage-specific attack method
     attack(target) {
-        if (this.useAP(6)) {
+        if (this.useAP(3)) {
             // Magical attack animation
             this.setAnimation('cast', this.currentDirection);
-            return this.computeDamage(10, 30, 'fire', target);
+            return this.computeDamage(5, 9, 'fire', target);
         }
         return 0;
     }

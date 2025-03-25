@@ -7,13 +7,11 @@ class Warrior extends Character {
         // Warrior-specific stats
         this.maxHealth = 120;
         this.health = this.maxHealth;
-        this.maxAP = 6;
+        this.maxAP = 8;
         this.currentAP = this.maxAP;
         this.maxMP = 3;
         this.currentMP = this.maxMP;
         this.attackRange = 1; // Melee range
-        this.attackDamage = 30;
-        this.defense = 20; // Additional warrior-specific stat
         
         // Warrior-specific animations
         this.animations = {
@@ -32,15 +30,9 @@ class Warrior extends Character {
         if (this.useAP(6)) {
             // Melee attack animation
             this.setAnimation('slash', this.currentDirection);
-            return this.attackDamage;
+            return this.computeDamage(6, 7, 'water', target);
         }
         return 0;
-    }
-
-    // Warrior-specific damage reduction
-    takeDamage(amount) {
-        const reducedDamage = Math.max(0, amount - (this.defense * 0.1));
-        return super.takeDamage(reducedDamage);
     }
 }
 

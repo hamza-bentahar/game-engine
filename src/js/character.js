@@ -645,9 +645,13 @@ class Character {
     resetStats() {
         this.currentAP = this.maxAP;
         this.currentMP = this.maxMP;
+    }
+
+    resetHealth() {
         this.health = this.maxHealth;
     }
 
+    
     useAP(amount) {
         if (this.currentAP >= amount) {
             this.currentAP -= amount;

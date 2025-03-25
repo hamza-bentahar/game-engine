@@ -2,7 +2,7 @@ import { Character } from './character.js';
 import { Mage } from './characters/Mage.js';
 import { Warrior } from './characters/Warrior.js';
 import { Rogue } from './characters/Rogue.js';
-import { Monster } from './monster.js';
+import { Dragon } from './dragon.js';
 import { IsometricGrid } from './grid.js';
 import { ControlPanel } from './controlPanel.js';
 import { CombatManager } from './combatManager.js';
@@ -383,7 +383,7 @@ class IsometricGame {
     }
     
     addMonster(type, position) {
-        const monster = new Monster(this.grid, type);
+        const monster = new Dragon(this.grid, type);
         monster.x = position.x;
         monster.y = position.y;
         console.log(`Spawned ${type} monster at (${monster.x}, ${monster.y})`);

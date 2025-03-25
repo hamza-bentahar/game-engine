@@ -30,26 +30,14 @@ class Rogue extends Character {
         this.moveSpeed = 0.07;
     }
 
-    // Rogue-specific attack method with critical hits
+    // Mage-specific attack method
     attack(target) {
-        console.log('Rogue attacking');
-        if (this.useAP(6)) {
-            // Throwing attack animation
-            this.setAnimation('throw', this.currentDirection);
-            
-            // Calculate critical hit
-            const isCritical = Math.random() < this.criticalChance;
-            const damage = isCritical ? this.attackDamage * 2 : this.attackDamage;
-            
-            return {
-                damage,
-                isCritical
-            };
+        if (this.useAP(3)) {
+            // Magical attack animation
+            this.setAnimation('cast', this.currentDirection);
+            return this.computeDamage(5, 9, 'air', target);
         }
-        return {
-            damage: 0,
-            isCritical: false
-        };
+        return 0;
     }
 }
 

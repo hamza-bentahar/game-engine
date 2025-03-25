@@ -1,6 +1,6 @@
 import { Character } from './character.js';
 
-class Monster extends Character {
+class Minotaur extends Character {
     constructor(grid, monsterType = 'dragon') {
         // Call parent constructor with monster-specific sprite
         super(grid, `${monsterType}_monster`);
@@ -11,11 +11,9 @@ class Monster extends Character {
         this.isAggressive = true;
         this.detectionRange = 5; // How many tiles away the monster can detect the player
         this.attackRange = 1; // How many tiles away the monster can attack
-        this.attackDamage = monsterType === 'dragon' ? 20 : 15; // Dragon does more damage
-        this.moveSpeed = monsterType === 'dragon' ? 0.03 : 0.04; // Minotaur moves faster
         
         // Override scale for monsters
-        this.scale = monsterType === 'dragon' ? 3.0 : 2.5;
+        this.scale = 1;
 
         // Add sprite load event listener
         this.spriteSheet.onload = () => {
@@ -24,23 +22,6 @@ class Monster extends Character {
 
         this.spriteSheet.onerror = (error) => {
             console.error(`Error loading ${monsterType} sprite sheet:`, error);
-        };
-        
-        // Add monster-specific animations
-        this.animations = {
-            ...this.animations, // Keep existing idle and walk animations
-            'attack': {
-                'down':  [0, 4, 6, 100],
-                'left':  [0, 5, 6, 100],
-                'right': [0, 6, 6, 100],
-                'up':    [0, 7, 6, 100]
-            },
-            'death': {
-                'down':  [0, 12, 6, 150],
-                'left':  [0, 13, 6, 150],
-                'right': [0, 14, 6, 150],
-                'up':    [0, 15, 6, 150]
-            }
         };
 
         this.isVisible = true;  // Add visibility flag
@@ -122,10 +103,10 @@ class Monster extends Character {
         if (this.useAP(6)) {
             // Magical attack animation
             this.setAnimation('slash', this.currentDirection);
-            return this.attackDamage;
+            return this.computeDamage(9, 11, 'water', target);
         }
         return 0;
     }
 }
 
-export { Monster }; 
+export { Minotaur }; 

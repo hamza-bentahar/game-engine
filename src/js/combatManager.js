@@ -314,7 +314,7 @@ class CombatManager {
     }
 
     updateAttackButton() {
-        const inRange = this.isInAttackRange();
+        const inRange = this.isInAttackRange(this.game.character.attackRange);
         this.attackButton.style.display = inRange ? 'block' : 'none';
         this.attackButton.disabled = this.game.character.currentAP < 6;
         
@@ -323,11 +323,11 @@ class CombatManager {
         }
     }
 
-    isInAttackRange() {
+    isInAttackRange(range) {
         const dx = this.game.character.x - this.currentEnemy.x;
         const dy = this.game.character.y - this.currentEnemy.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance <= 1.5; // Attack range of 1 tile
+        return distance <= range;
     }
 
     performAttack() {
@@ -374,7 +374,7 @@ class CombatManager {
         const character = this.game.character;
         
         // Simple AI: Move towards player if not in range, attack if in range
-        if (!this.isInAttackRange()) {
+        while (!this.isInAttackRange(monster.attackRange) && monster.currentMP > 0) {
             // Move towards player
             const dx = character.x - monster.x;
             const dy = character.y - monster.y;
@@ -389,11 +389,14 @@ class CombatManager {
                 monster.x = newX;
                 monster.y = newY;
                 this.updateMonsterStats();
+            } else {
+                // If we can't move in the desired direction, break to avoid infinite loop
+                break;
             }
         }
         
         // Attack if in range
-        if (this.isInAttackRange()) {
+        if (this.isInAttackRange(monster.attackRange)) {
             const damage = monster.attack(character);
             character.takeDamage(damage);
             this.updateMonsterStats();
@@ -421,7 +424,7 @@ class CombatManager {
             m.isVisible = true;
         });
 
-        this.game.character.resetStats();
+        this.game.character.resetHealth();
         
         if (playerWon) {
             // Remove defeated monster
