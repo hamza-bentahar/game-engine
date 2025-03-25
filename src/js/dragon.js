@@ -12,8 +12,6 @@ class Dragon extends Character {
         this.isAggressive = true;
         this.detectionRange = 5; // How many tiles away the monster can detect the player
         this.attackRange = 1; // How many tiles away the monster can attack
-        this.attackDamage = monsterType === 'dragon' ? 20 : 15; // Dragon does more damage
-        this.moveSpeed = monsterType === 'dragon' ? 0.03 : 0.04; // Minotaur moves faster
         
         // Override scale for monsters
         this.scale = monsterType === 'dragon' ? 3.0 : 2.5;
@@ -81,14 +79,14 @@ class Dragon extends Character {
         ctx.globalAlpha = 1.0;
 
         // Draw health bar if monster is alive and has taken damage
-        if (this.isAlive && this.health < 100) {
+        if (this.isAlive && this.health < this.maxHealth) {
             // Health bar background
             ctx.fillStyle = '#ff0000';
             ctx.fillRect(screenX - 25, screenY - 40, 50, 5);
             
             // Health bar fill
             ctx.fillStyle = '#00ff00';
-            ctx.fillRect(screenX - 25, screenY - 40, (this.health / 100) * 50, 5);
+            ctx.fillRect(screenX - 25, screenY - 40, (this.health / this.maxHealth) * 50, 5);
         }
 
         // Draw debug box around monster
