@@ -10,7 +10,12 @@ class Dragon extends Monster {
         this.health = this.maxHealth;
         this.isAlive = true;
         this.isAggressive = true;
-        this.attackRange = 1; // How many tiles away the monster can attack
+        this.attackRange = 1;
+
+        this.maxAP = 6;
+        this.currentAP = this.maxAP;
+        this.maxMP = 3;
+        this.currentMP = this.maxMP;
         
         // Override scale for monsters
         this.scale = 2;
@@ -27,6 +32,43 @@ class Dragon extends Monster {
         this.isVisible = true;  // Add visibility flag
 
         console.log(`Monster created: ${monsterType}, Sprite path: ${this.spriteSheet.src}`);
+    }
+
+    performTurn(character, grid, combatUI) {
+        console.log('Minotaur performing turn');
+        while (!this.isInAttackRange(this.attackRange, character) && this.currentMP > 0) {
+            // Move towards player
+            const dx = character.x - this.x;
+            const dy = character.y - this.y;
+            const angle = Math.atan2(dy, dx);
+            
+            // Calculate new position
+            const newX = this.x + Math.round(Math.cos(angle));
+            const newY = this.y + Math.round(Math.sin(angle));
+
+            // Move if valid position
+            if (this.useMP(1) && !grid.hasObstacle(newX, newY)) {
+                this.x = newX;
+                this.y = newY;
+                combatUI.updateMonsterStats(this);
+            } else {
+                // If we can't move in the desired direction, break to avoid infinite loop
+                break;
+            }
+        }
+
+        // Attack if in range
+        if (this.isInAttackRange(character, this.attackRange)) {
+            const damage = this.attack(character);
+            character.takeDamage(damage);
+            combatUI.updateMonsterStats();
+            
+            // Check for combat end
+            if (character.health <= 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Mage-specific attack method

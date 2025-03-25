@@ -750,6 +750,13 @@ class Character {
         this.showLevelUpNotification();
     }
 
+    isInAttackRange(otherCharacter, range) {
+        const dx = this.x - otherCharacter.x;
+        const dy = this.y - otherCharacter.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance <= range;
+    }
+
     showLevelUpNotification() {
         // Get canvas position for positioning the notification
         const canvas = this.grid.canvas;

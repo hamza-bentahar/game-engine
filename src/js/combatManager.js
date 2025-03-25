@@ -1,3 +1,5 @@
+import { CombatUI } from './CombatUI.js';
+
 class CombatManager {
     constructor(game) {
         this.game = game;
@@ -12,171 +14,14 @@ class CombatManager {
         this.turnCounter = 0;
         
         // Create combat UI
-        this.createCombatUI();
-    }
-
-    createCombatUI() {
-        // Create main combat container
-        this.combatUI = document.createElement('div');
-        this.combatUI.id = 'combat-ui';
-        this.combatUI.style.position = 'absolute';
-        this.combatUI.style.right = '20px';
-        this.combatUI.style.top = '20px';
-        this.combatUI.style.backgroundColor = 'rgba(44, 62, 80, 0.9)';
-        this.combatUI.style.padding = '15px';
-        this.combatUI.style.borderRadius = '5px';
-        this.combatUI.style.color = '#ecf0f1';
-        this.combatUI.style.fontFamily = 'Arial, sans-serif';
-        this.combatUI.style.display = 'none';
-        this.combatUI.style.minWidth = '300px';
-        
-        // Create timer display
-        this.timerDisplay = document.createElement('div');
-        this.timerDisplay.id = 'combat-timer';
-        this.timerDisplay.style.fontSize = '24px';
-        this.timerDisplay.style.marginBottom = '15px';
-        this.timerDisplay.style.textAlign = 'center';
-        this.combatUI.appendChild(this.timerDisplay);
-        
-        // Create phase display
-        this.phaseDisplay = document.createElement('div');
-        this.phaseDisplay.id = 'combat-phase';
-        this.phaseDisplay.style.fontSize = '18px';
-        this.phaseDisplay.style.marginBottom = '15px';
-        this.phaseDisplay.style.textAlign = 'center';
-        this.combatUI.appendChild(this.phaseDisplay);
-
-        // Create monster stats container
-        this.monsterStats = document.createElement('div');
-        this.monsterStats.style.marginBottom = '15px';
-        this.monsterStats.style.padding = '10px';
-        this.monsterStats.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
-        this.monsterStats.style.borderRadius = '3px';
-        this.combatUI.appendChild(this.monsterStats);
-
-        // Create monster name
-        this.monsterName = document.createElement('div');
-        this.monsterName.style.fontSize = '16px';
-        this.monsterName.style.fontWeight = 'bold';
-        this.monsterName.style.marginBottom = '10px';
-        this.monsterStats.appendChild(this.monsterName);
-
-        // Create monster stat bars
-        this.monsterHP = this.createStatBar('#e74c3c', 'HP');
-        this.monsterAP = this.createStatBar('#3498db', 'AP');
-        this.monsterMP = this.createStatBar('#2ecc71', 'MP');
-        this.monsterStats.appendChild(this.monsterHP.container);
-        this.monsterStats.appendChild(this.monsterAP.container);
-        this.monsterStats.appendChild(this.monsterMP.container);
-        
-        // Create action buttons container
-        this.actionButtons = document.createElement('div');
-        this.actionButtons.style.display = 'flex';
-        this.actionButtons.style.flexDirection = 'column';
-        this.actionButtons.style.gap = '10px';
-        this.combatUI.appendChild(this.actionButtons);
-        
-        // Create Ready/Done button
-        this.mainButton = this.createButton('Ready');
-        this.mainButton.style.display = 'none';
-        this.actionButtons.appendChild(this.mainButton);
-        
-        // Create Attack button
-        this.attackButton = this.createButton('Attack (6 AP)');
-        this.attackButton.style.display = 'none';
-        this.actionButtons.appendChild(this.attackButton);
-        
-        document.body.appendChild(this.combatUI);
-    }
-
-    createButton(text) {
-        const button = document.createElement('button');
-        button.textContent = text;
-        button.style.padding = '10px 20px';
-        button.style.fontSize = '16px';
-        button.style.backgroundColor = '#3498db';
-        button.style.color = 'white';
-        button.style.border = 'none';
-        button.style.borderRadius = '5px';
-        button.style.cursor = 'pointer';
-        button.style.transition = 'background-color 0.2s';
-        
-        button.addEventListener('mouseover', () => {
-            button.style.backgroundColor = '#2980b9';
-        });
-        
-        button.addEventListener('mouseout', () => {
-            button.style.backgroundColor = '#3498db';
-        });
-        
-        return button;
-    }
-
-    createStatBar(color, label) {
-        const container = document.createElement('div');
-        container.style.marginBottom = '8px';
-        
-        const labelDiv = document.createElement('div');
-        labelDiv.style.fontSize = '14px';
-        labelDiv.style.marginBottom = '4px';
-        labelDiv.textContent = label;
-        container.appendChild(labelDiv);
-        
-        const barContainer = document.createElement('div');
-        barContainer.style.width = '100%';
-        barContainer.style.height = '12px';
-        barContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
-        barContainer.style.borderRadius = '6px';
-        barContainer.style.overflow = 'hidden';
-        container.appendChild(barContainer);
-        
-        const bar = document.createElement('div');
-        bar.style.width = '100%';
-        bar.style.height = '100%';
-        bar.style.backgroundColor = color;
-        bar.style.transition = 'width 0.3s ease';
-        barContainer.appendChild(bar);
-        
-        const value = document.createElement('div');
-        value.style.fontSize = '12px';
-        value.style.textAlign = 'right';
-        value.style.marginTop = '2px';
-        container.appendChild(value);
-        
-        return {
-            container,
-            bar,
-            value
-        };
-    }
-
-    updateMonsterStats() {
-        if (!this.currentEnemy) return;
-
-        // Update monster name
-        this.monsterName.textContent = `${this.currentEnemy.monsterType.charAt(0).toUpperCase() + this.currentEnemy.monsterType.slice(1)}`;
-
-        // Update HP bar
-        const hpPercent = (this.currentEnemy.health / this.currentEnemy.maxHealth) * 100;
-        this.monsterHP.bar.style.width = `${hpPercent}%`;
-        this.monsterHP.value.textContent = `${this.currentEnemy.health}/${this.currentEnemy.maxHealth}`;
-
-        // Update AP bar
-        const apPercent = (this.currentEnemy.currentAP / this.currentEnemy.maxAP) * 100;
-        this.monsterAP.bar.style.width = `${apPercent}%`;
-        this.monsterAP.value.textContent = `${this.currentEnemy.currentAP}/${this.currentEnemy.maxAP}`;
-
-        // Update MP bar
-        const mpPercent = (this.currentEnemy.currentMP / this.currentEnemy.maxMP) * 100;
-        this.monsterMP.bar.style.width = `${mpPercent}%`;
-        this.monsterMP.value.textContent = `${this.currentEnemy.currentMP}/${this.currentEnemy.maxMP}`;
+        this.ui = new CombatUI();
     }
 
     startCombat(monster) {
         this.inCombat = true;
         this.currentEnemy = monster;
         this.currentPhase = 'preparation';
-        this.combatUI.style.display = 'block';
+        this.ui.show();
         
         // Set character to combat-idle animation
         this.game.character.setAnimation('combat-idle', this.game.character.currentDirection);
@@ -190,19 +35,19 @@ class CombatManager {
         });
         
         // Update monster stats display
-        this.updateMonsterStats();
+        this.ui.updateMonsterStats(this.currentEnemy);
         
         // Generate 3 starting positions
         this.generateStartingPositions();
         
         // Update UI
-        this.updatePhaseDisplay();
-        this.mainButton.textContent = 'Ready';
-        this.mainButton.style.display = 'block';
-        this.attackButton.style.display = 'none';
+        this.ui.updatePhaseDisplay(this.currentPhase);
+        this.ui.mainButton.textContent = 'Ready';
+        this.ui.mainButton.style.display = 'block';
+        this.ui.attackButton.style.display = 'none';
         
         // Setup button listeners
-        this.mainButton.onclick = () => this.startCombatPhase();
+        this.ui.mainButton.onclick = () => this.startCombatPhase();
         
         // Start preparation timer
         this.startTimer(() => this.startCombatPhase());
@@ -277,7 +122,7 @@ class CombatManager {
 
     selectStartingPosition(pos) {
         this.selectedStartPosition = pos;
-        this.mainButton.disabled = false;
+        this.ui.mainButton.disabled = false;
     }
 
     startCombatPhase() {
@@ -297,7 +142,7 @@ class CombatManager {
     startPlayerTurn() { 
         this.turnCounter++;
         this.currentPhase = 'playerTurn';
-        this.updatePhaseDisplay();
+        this.ui.updatePhaseDisplay(this.currentPhase);
         
         // Reset character's AP and MP
         this.game.character.resetStats();
@@ -306,9 +151,9 @@ class CombatManager {
         this.updateAttackButton();
         
         // Update UI
-        this.mainButton.textContent = 'End Turn';
-        this.mainButton.style.display = 'block';
-        this.mainButton.onclick = () => this.endPlayerTurn();
+        this.ui.mainButton.textContent = 'End Turn';
+        this.ui.mainButton.style.display = 'block';
+        this.ui.mainButton.onclick = () => this.endPlayerTurn();
         
         // Start turn timer
         this.startTimer(() => this.endPlayerTurn());
@@ -316,11 +161,11 @@ class CombatManager {
 
     updateAttackButton() {
         const inRange = this.isInAttackRange(this.game.character.attackRange);
-        this.attackButton.style.display = inRange ? 'block' : 'none';
-        this.attackButton.disabled = this.game.character.currentAP < 6;
+        this.ui.attackButton.style.display = inRange ? 'block' : 'none';
+        this.ui.attackButton.disabled = this.game.character.currentAP < 6;
         
         if (inRange) {
-            this.attackButton.onclick = () => this.performAttack();
+            this.ui.attackButton.onclick = () => this.performAttack();
         }
     }
 
@@ -339,7 +184,7 @@ class CombatManager {
             
             // Update UI
             this.updateAttackButton();
-            this.updateMonsterStats();
+            this.ui.updateMonsterStats(this.currentEnemy);
             
             // Check for combat end
             if (this.currentEnemy.health <= 0) {
@@ -355,14 +200,14 @@ class CombatManager {
 
     startMonsterTurn() {
         this.currentPhase = 'monsterTurn';
-        this.updatePhaseDisplay();
+        this.ui.updatePhaseDisplay(this.currentPhase);
         
         // Reset monster's AP and MP
         this.currentEnemy.resetStats();
         
         // Hide action buttons during monster turn
-        this.mainButton.style.display = 'none';
-        this.attackButton.style.display = 'none';
+        this.ui.mainButton.style.display = 'none';
+        this.ui.attackButton.style.display = 'none';
         
         // Start monster AI
         setTimeout(() => {
@@ -371,42 +216,10 @@ class CombatManager {
     }
 
     performMonsterTurn() {
-        const monster = this.currentEnemy;
-        const character = this.game.character;
-        
-        // Simple AI: Move towards player if not in range, attack if in range
-        while (!this.isInAttackRange(monster.attackRange) && monster.currentMP > 0) {
-            // Move towards player
-            const dx = character.x - monster.x;
-            const dy = character.y - monster.y;
-            const angle = Math.atan2(dy, dx);
-            
-            // Calculate new position
-            const newX = monster.x + Math.round(Math.cos(angle));
-            const newY = monster.y + Math.round(Math.sin(angle));
-            
-            // Move if valid position
-            if (monster.useMP(1) && !this.game.grid.hasObstacle(newX, newY)) {
-                monster.x = newX;
-                monster.y = newY;
-                this.updateMonsterStats();
-            } else {
-                // If we can't move in the desired direction, break to avoid infinite loop
-                break;
-            }
-        }
-        
-        // Attack if in range
-        if (this.isInAttackRange(monster.attackRange)) {
-            const damage = monster.attack(character);
-            character.takeDamage(damage);
-            this.updateMonsterStats();
-            
-            // Check for combat end
-            if (character.health <= 0) {
-                this.endCombat(false);
-                return;
-            }
+        const monsterWon = this.currentEnemy.performTurn(this.game.character, this.game.grid, this.ui);
+        if (monsterWon) {
+            this.endCombat(false);
+            return;
         }
         
         // End turn after a delay
@@ -417,7 +230,7 @@ class CombatManager {
 
     endCombat(playerWon) {
         this.inCombat = false;
-        this.combatUI.style.display = 'none';
+        this.ui.hide();
         clearTimeout(this.turnTimer);
         
         // Show all surviving monsters again
@@ -459,32 +272,16 @@ class CombatManager {
             const remaining = Math.max(0, this.turnTimeLimit - elapsed);
             
             if (remaining > 0) {
-                this.timerDisplay.textContent = `Time: ${Math.ceil(remaining / 1000)}s`;
+                this.ui.updateTimer(remaining);
                 requestAnimationFrame(updateTimer);
             } else {
-                this.timerDisplay.textContent = "Time's up!";
+                this.ui.setTimerExpired();
                 callback();
             }
         };
         
         updateTimer();
         this.turnTimer = setTimeout(callback, this.turnTimeLimit);
-    }
-
-    updatePhaseDisplay() {
-        let phaseText = '';
-        switch (this.currentPhase) {
-            case 'preparation':
-                phaseText = 'Preparation Phase - Choose starting position';
-                break;
-            case 'playerTurn':
-                phaseText = 'Your Turn';
-                break;
-            case 'monsterTurn':
-                phaseText = "Monster's Turn";
-                break;
-        }
-        this.phaseDisplay.textContent = phaseText;
     }
 }
 
