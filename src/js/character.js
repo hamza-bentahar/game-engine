@@ -37,7 +37,7 @@ class Character {
                 name: 'Basic Attack',
                 minDamage: 5,
                 maxDamage: 8,
-                cost: 2,
+                cost: 6,
                 range: 1,
                 element: 'physical',
                 description: 'A basic physical attack.'
@@ -213,8 +213,8 @@ class Character {
         let elementResistance = elementResistances[element] || 0;
 
         const multiplier = (100 + elementMultiplier + this.power) / 100;
-        const damage = base * multiplier * (1 - (elementResistance/100));
-        console.log('Damage: ' + damage);
+        let damage = base * multiplier * (1 - (elementResistance/100));
+        damage = Math.floor(damage);
         return damage;
     }
 

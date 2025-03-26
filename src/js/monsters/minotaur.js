@@ -71,16 +71,6 @@ class Minotaur extends Monster {
         }
         return false;
     }
-    // Mage-specific attack method
-    attack(target) {
-        console.log('Monster attacking');
-        if (this.useAP(6)) {
-            // Magical attack animation
-            this.setAnimation('slash', this.currentDirection);
-            return this.computeDamage(9, 11, 'water', target);
-        }
-        return 0;
-    }
 }
 
 export { Minotaur }; 
