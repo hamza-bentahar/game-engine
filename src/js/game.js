@@ -2,8 +2,8 @@ import { Character } from './character.js';
 import { Mage } from './characters/Mage.js';
 import { Warrior } from './characters/Warrior.js';
 import { Rogue } from './characters/Rogue.js';
-import { Dragon } from './dragon.js';
-import { Minotaur } from './minotaur.js';
+import { Dragon } from './monsters/dragon.js';
+import { Minotaur } from './monsters/minotaur.js';
 import { IsometricGrid } from './grid.js';
 import { ControlPanel } from './controlPanel.js';
 import { CombatManager } from './combatManager.js';
@@ -252,8 +252,8 @@ class IsometricGame {
                 // Move character instantly in combat
                 this.character.x = gridPos.x;
                 this.character.y = gridPos.y;
-                // Update attack button availability
-                this.combatManager.updateAttackButton();
+                // Update spell list after movement
+                this.combatManager.updateSpellList();
             }
             return;
         }

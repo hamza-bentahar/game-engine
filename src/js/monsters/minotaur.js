@@ -1,7 +1,7 @@
-import { Monster } from './monster.js';
+import { Monster } from '../monster.js';
 
-class Dragon extends Monster {
-    constructor(grid, monsterType = 'dragon') {
+class Minotaur extends Monster {
+    constructor(grid, monsterType = 'minotaur') {
         // Call parent constructor with monster-specific sprite
         super(grid, `${monsterType}`);
         
@@ -10,6 +10,7 @@ class Dragon extends Monster {
         this.health = this.maxHealth;
         this.isAlive = true;
         this.isAggressive = true;
+        this.detectionRange = 5; 
         this.attackRange = 1;
 
         this.maxAP = 6;
@@ -70,7 +71,6 @@ class Dragon extends Monster {
         }
         return false;
     }
-
     // Mage-specific attack method
     attack(target) {
         console.log('Monster attacking');
@@ -83,4 +83,4 @@ class Dragon extends Monster {
     }
 }
 
-export { Dragon }; 
+export { Minotaur }; 

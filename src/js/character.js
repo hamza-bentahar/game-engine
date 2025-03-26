@@ -31,6 +31,19 @@ class Character {
         this.luck = 0;
         this.power = 0;
 
+        // Base spell list - should be overridden by specific classes
+        this.spellList = [
+            {
+                name: 'Basic Attack',
+                minDamage: 5,
+                maxDamage: 8,
+                cost: 2,
+                range: 1,
+                element: 'physical',
+                description: 'A basic physical attack.'
+            }
+        ];
+
         this.fireResistance = 0;
         this.waterResistance = 0;
         this.earthResistance = 0;
@@ -206,10 +219,23 @@ class Character {
     }
 
     // Base attack method - should be overridden by specific classes
-    attack(target) {
-        console.log('Character attacking');
-        if (this.useAP(6)) {
-            return this.attackDamage;
+    attack(target, spellName = 'Basic Attack') {
+        console.log('Character attacking with', spellName);
+        const spell = this.spellList.find(s => s.name === spellName);
+        
+        if (!spell) {
+            console.error('Spell not found:', spellName);
+            return 0;
+        }
+
+        if (this.useAP(spell.cost)) {
+            // Set animation based on spell type (can be expanded later)
+            if (spell.element === 'physical') {
+                this.setAnimation('slash', this.currentDirection);
+            } else {
+                this.setAnimation('cast', this.currentDirection);
+            }
+            return this.computeDamage(spell.minDamage, spell.maxDamage, spell.element, target);
         }
         return 0;
     }

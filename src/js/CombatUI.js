@@ -74,9 +74,12 @@ class CombatUI {
         this.mainButton.style.display = 'none';
         this.actionButtons.appendChild(this.mainButton);
 
-        this.attackButton = this.createButton('Attack (6 AP)');
-        this.attackButton.style.display = 'none';
-        this.actionButtons.appendChild(this.attackButton);
+        // Create spell list container
+        this.spellListContainer = document.createElement('div');
+        this.spellListContainer.style.display = 'none';
+        this.spellListContainer.style.flexDirection = 'column';
+        this.spellListContainer.style.gap = '8px';
+        this.actionButtons.appendChild(this.spellListContainer);
     }
 
     createButton(text) {
@@ -140,12 +143,129 @@ class CombatUI {
         };
     }
 
+    createSpellButton(spell, onSpellSelect) {
+        const spellContainer = document.createElement('div');
+        spellContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+        spellContainer.style.borderRadius = '5px';
+        spellContainer.style.padding = '8px';
+        
+        // Create header with name and cost
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.marginBottom = '4px';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = spell.name;
+        nameSpan.style.fontWeight = 'bold';
+        
+        const costSpan = document.createElement('span');
+        costSpan.textContent = `${spell.cost} AP`;
+        costSpan.style.color = '#3498db';
+        
+        header.appendChild(nameSpan);
+        header.appendChild(costSpan);
+        spellContainer.appendChild(header);
+        
+        // Add description
+        const description = document.createElement('div');
+        description.textContent = spell.description;
+        description.style.fontSize = '12px';
+        description.style.color = '#bdc3c7';
+        description.style.marginBottom = '8px';
+        spellContainer.appendChild(description);
+        
+        // Add stats
+        const stats = document.createElement('div');
+        stats.style.display = 'flex';
+        stats.style.gap = '10px';
+        stats.style.fontSize = '12px';
+        
+        const damage = document.createElement('span');
+        damage.textContent = `Damage: ${spell.minDamage}-${spell.maxDamage}`;
+        damage.style.color = '#e74c3c';
+        
+        const range = document.createElement('span');
+        range.textContent = `Range: ${spell.range}`;
+        range.style.color = '#2ecc71';
+        
+        const element = document.createElement('span');
+        element.textContent = `${spell.element.charAt(0).toUpperCase() + spell.element.slice(1)}`;
+        element.style.color = this.getElementColor(spell.element);
+        
+        stats.appendChild(damage);
+        stats.appendChild(range);
+        stats.appendChild(element);
+        spellContainer.appendChild(stats);
+        
+        // Make the container clickable
+        spellContainer.style.cursor = 'pointer';
+        spellContainer.style.transition = 'all 0.2s';
+        
+        // Add click handler if provided
+        if (onSpellSelect) {
+            spellContainer.addEventListener('click', () => onSpellSelect(spell));
+        }
+        
+        spellContainer.addEventListener('mouseover', () => {
+            spellContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+            spellContainer.style.transform = 'translateY(-2px)';
+        });
+        
+        spellContainer.addEventListener('mouseout', () => {
+            spellContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+            spellContainer.style.transform = 'translateY(0)';
+        });
+
+        // Add disabled state if not enough AP
+        this.updateSpellButtonState(spellContainer, spell);
+        
+        return spellContainer;
+    }
+
+    updateSpellButtonState(spellContainer, spell, currentAP) {
+        if (currentAP != null && spell.cost > currentAP) {
+            spellContainer.style.opacity = '0.5';
+            spellContainer.style.cursor = 'not-allowed';
+            spellContainer.title = 'Not enough AP';
+        } else {
+            spellContainer.style.opacity = '1';
+            spellContainer.style.cursor = 'pointer';
+            spellContainer.title = '';
+        }
+    }
+
+    updateSpellList(character, onSpellSelect) {
+        this.spellListContainer.innerHTML = '';
+        this.spellListContainer.style.display = 'flex';
+        
+        character.spellList.forEach(spell => {
+            const spellButton = this.createSpellButton(spell, onSpellSelect);
+            this.spellListContainer.appendChild(spellButton);
+            this.updateSpellButtonState(spellButton, spell, character.currentAP);
+        });
+    }
+
+    getElementColor(element) {
+        const colors = {
+            physical: '#95a5a6',
+            fire: '#e74c3c',
+            water: '#3498db',
+            earth: '#d35400',
+            air: '#1abc9c',
+            arcane: '#9b59b6'
+        };
+        return colors[element] || '#95a5a6';
+    }
+
     show() {
         this.combatUI.style.display = 'block';
     }
 
     hide() {
         this.combatUI.style.display = 'none';
+        this.spellListContainer.style.display = 'none';
     }
 
     updatePhaseDisplay(phase) {

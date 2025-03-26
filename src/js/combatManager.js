@@ -44,7 +44,7 @@ class CombatManager {
         this.ui.updatePhaseDisplay(this.currentPhase);
         this.ui.mainButton.textContent = 'Ready';
         this.ui.mainButton.style.display = 'block';
-        this.ui.attackButton.style.display = 'none';
+        this.ui.spellListContainer.style.display = 'none';
         
         // Setup button listeners
         this.ui.mainButton.onclick = () => this.startCombatPhase();
@@ -86,6 +86,10 @@ class CombatManager {
         const existingMarkers = document.querySelectorAll('.starting-position-marker');
         existingMarkers.forEach(marker => marker.remove());
         
+        // Get canvas position
+        const canvas = this.game.grid.canvas;
+        const canvasRect = canvas.getBoundingClientRect();
+        
         // Create markers for each starting position
         this.startingPositions.forEach((pos, index) => {
             const screenPos = this.game.grid.toScreen(pos.x, pos.y);
@@ -93,8 +97,8 @@ class CombatManager {
             const marker = document.createElement('div');
             marker.className = 'starting-position-marker';
             marker.style.position = 'absolute';
-            marker.style.left = `${screenPos.x - 15}px`;
-            marker.style.top = `${screenPos.y - 15}px`;
+            marker.style.left = `${canvasRect.left + screenPos.x - 15}px`;
+            marker.style.top = `${canvasRect.top + screenPos.y - 15}px`;
             marker.style.width = '30px';
             marker.style.height = '30px';
             marker.style.backgroundColor = 'rgba(46, 204, 113, 0.5)';
@@ -107,6 +111,16 @@ class CombatManager {
             marker.style.color = 'white';
             marker.style.fontSize = '16px';
             marker.textContent = (index + 1).toString();
+            
+            // Add resize handler to keep markers positioned correctly
+            const updatePosition = () => {
+                const updatedRect = canvas.getBoundingClientRect();
+                const updatedScreenPos = this.game.grid.toScreen(pos.x, pos.y);
+                marker.style.left = `${updatedRect.left + updatedScreenPos.x - 15}px`;
+                marker.style.top = `${updatedRect.top + updatedScreenPos.y - 15}px`;
+            };
+            
+            window.addEventListener('resize', updatePosition);
             
             marker.onclick = () => {
                 this.selectStartingPosition(pos);
@@ -147,8 +161,8 @@ class CombatManager {
         // Reset character's AP and MP
         this.game.character.resetStats();
         
-        // Show attack button if in range
-        this.updateAttackButton();
+        // Show spells if in range
+        this.updateSpellList();
         
         // Update UI
         this.ui.mainButton.textContent = 'End Turn';
@@ -159,31 +173,25 @@ class CombatManager {
         this.startTimer(() => this.endPlayerTurn());
     }
 
-    updateAttackButton() {
-        const inRange = this.isInAttackRange(this.game.character.attackRange);
-        this.ui.attackButton.style.display = inRange ? 'block' : 'none';
-        this.ui.attackButton.disabled = this.game.character.currentAP < 6;
-        
-        if (inRange) {
-            this.ui.attackButton.onclick = () => this.performAttack();
-        }
+    updateSpellList() {
+        const character = this.game.character;
+        this.ui.updateSpellList(character, (spell) => {
+            if (this.isInAttackRange(spell.range)) {
+                this.performAttack(spell);
+            } else {
+                alert(`Target is out of range for ${spell.name}. Move closer!`);
+            }
+        });
     }
 
-    isInAttackRange(range) {
-        const dx = this.game.character.x - this.currentEnemy.x;
-        const dy = this.game.character.y - this.currentEnemy.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance <= range;
-    }
-
-    performAttack() {
-        const damage = this.game.character.attack(this.currentEnemy);
+    performAttack(spell) {
+        const damage = this.game.character.attack(this.currentEnemy, spell.name);
         if (damage > 0) {
             // Deal damage
             this.currentEnemy.takeDamage(damage);
             
             // Update UI
-            this.updateAttackButton();
+            this.updateSpellList();
             this.ui.updateMonsterStats(this.currentEnemy);
             
             // Check for combat end
@@ -207,7 +215,7 @@ class CombatManager {
         
         // Hide action buttons during monster turn
         this.ui.mainButton.style.display = 'none';
-        this.ui.attackButton.style.display = 'none';
+        this.ui.spellListContainer.style.display = 'none';
         
         // Start monster AI
         setTimeout(() => {
@@ -282,6 +290,13 @@ class CombatManager {
         
         updateTimer();
         this.turnTimer = setTimeout(callback, this.turnTimeLimit);
+    }
+
+    isInAttackRange(range) {
+        const dx = this.game.character.x - this.currentEnemy.x;
+        const dy = this.game.character.y - this.currentEnemy.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance <= range;
     }
 }
 
