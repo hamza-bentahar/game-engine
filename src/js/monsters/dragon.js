@@ -22,7 +22,6 @@ class Dragon extends Monster {
         // Override scale for monsters
         this.scale = 1 + (level * 0.3);
         this.intelligence = 10 + (level * 5);
-        this.fireResistance = Math.max((15 + (level * 2)), 40);
 
         // Add sprite load event listener
         this.spriteSheet.onload = () => {
@@ -62,17 +61,17 @@ class Dragon extends Monster {
         }
 
         // Attack if in range
+        const actions = [];
         if (this.isInAttackRange(character, this.attackRange)) {
             const damage = this.attack(character);
             character.takeDamage(damage);
             combatUI.updateMonsterStats();
-            
-            // Check for combat end
-            if (character.health <= 0) {
-                return true;
-            }
+            actions.push({  
+                spellName: 'Basic Attack',
+                damage: damage
+            });
         }
-        return false;
+        return actions;
     }
 }
 

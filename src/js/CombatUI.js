@@ -4,6 +4,7 @@ class CombatUI {
         this.createTimerDisplay();
         this.createPhaseDisplay();
         this.createMonsterStats();
+        this.createCombatHistory();
         this.createActionButtons();
     }
 
@@ -61,6 +62,36 @@ class CombatUI {
         this.monsterStats.appendChild(this.monsterHP.container);
         this.monsterStats.appendChild(this.monsterAP.container);
         this.monsterStats.appendChild(this.monsterMP.container);
+    }
+
+    createCombatHistory() {
+        // Create combat history container
+        this.historyContainer = document.createElement('div');
+        this.historyContainer.id = 'combat-history';
+        this.historyContainer.style.marginBottom = '15px';
+        this.historyContainer.style.maxHeight = '200px';
+        this.historyContainer.style.overflowY = 'auto';
+        this.historyContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+        this.historyContainer.style.borderRadius = '5px';
+        this.historyContainer.style.padding = '10px';
+
+        // Add title
+        const title = document.createElement('div');
+        title.textContent = 'Combat History';
+        title.style.fontSize = '16px';
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '10px';
+        this.historyContainer.appendChild(title);
+
+        // Create list for history entries
+        this.historyList = document.createElement('div');
+        this.historyList.style.display = 'flex';
+        this.historyList.style.flexDirection = 'column';
+        this.historyList.style.gap = '5px';
+        this.historyContainer.appendChild(this.historyList);
+
+        // Add to main container before action buttons
+        this.combatUI.insertBefore(this.historyContainer, this.actionButtons);
     }
 
     createActionButtons() {
@@ -312,6 +343,33 @@ class CombatUI {
 
     setTimerExpired() {
         this.timerDisplay.textContent = "Time's up!";
+    }
+
+    updateCombatHistory(history) {
+        // Clear existing entries
+        this.historyList.innerHTML = '';
+
+        // Add new entries, showing most recent first
+        history.slice().reverse().forEach(entry => {
+            const historyEntry = document.createElement('div');
+            historyEntry.style.fontSize = '14px';
+            historyEntry.style.padding = '5px';
+            historyEntry.style.borderBottom = '1px solid rgba(255, 255, 255, 0.1)';
+
+            // Format the entry text
+            const timestamp = new Date(entry.timestamp).toLocaleTimeString();
+            const attackerColor = entry.attacker === 'Player' ? '#3498db' : '#e74c3c';
+            
+            historyEntry.innerHTML = `
+                <span style="color: ${attackerColor}">${entry.attacker}</span> used 
+                <span style="color: #f1c40f">${entry.spell}</span> on 
+                <span style="color: #2ecc71">${entry.target}</span> for 
+                <span style="color: #e74c3c">${entry.damage} damage</span>
+                <span style="color: #95a5a6; font-size: 12px; float: right">${timestamp}</span>
+            `;
+
+            this.historyList.appendChild(historyEntry);
+        });
     }
 }
 

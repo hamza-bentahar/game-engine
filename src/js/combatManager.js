@@ -16,6 +16,7 @@ class CombatManager {
         this.currentTeam = null;
         this.enemyTeam = null;
         this.currentEntityIdx = null;
+        this.turnHistory = []; // Array to store combat history
 
         // Create combat UI
         this.ui = new CombatUI();
@@ -238,9 +239,20 @@ class CombatManager {
             // Deal damage
             this.currentEnemy.takeDamage(damage);
             
+            // Record the turn in history
+            this.turnHistory.push({
+                turn: this.turnCounter,
+                attacker: this.game.character.name,
+                target: this.currentEnemy.monsterType,
+                spell: spell.name,
+                damage: damage,
+                timestamp: new Date().toISOString()
+            });
+            
             // Update UI
             this.updateSpellList();
             this.ui.updateMonsterStats(this.currentEnemy);
+            this.ui.updateCombatHistory(this.turnHistory);
             
             // Check for combat end
             if (this.currentEnemy.health <= 0) {
@@ -267,10 +279,24 @@ class CombatManager {
         
         // Start monster AI
         setTimeout(() => {
-            this.currentEnemy.performTurn(this.game.character, this.game.grid, this.ui);
+            const monsterAction = this.currentEnemy.performTurn(this.game.character, this.game.grid, this.ui);
+
+            if (monsterAction.length > 0) {
+                for (const action of monsterAction) {
+                    this.turnHistory.push({
+                        turn: this.turnCounter,
+                        attacker: this.currentEnemy.monsterType,
+                        target: this.game.character.name,
+                        spell: action.spellName || 'Attack',
+                        damage: action.damage,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            }
+            this.ui.updateCombatHistory(this.turnHistory);
+            
             this.startTurn();
         }, 1000);
-
     }
 
     endCombat(playerWon) {
