@@ -1,4 +1,5 @@
 import { CombatUI } from './CombatUI.js';
+import { Team } from './Team.js';
 
 class CombatManager {
     constructor(game) {
@@ -12,7 +13,10 @@ class CombatManager {
         this.selectedStartPosition = null;
         this.timerStartTime = null;
         this.turnCounter = 0;
-        
+        this.currentTeam = null;
+        this.enemyTeam = null;
+        this.currentEntityIdx = null;
+
         // Create combat UI
         this.ui = new CombatUI();
     }
@@ -21,6 +25,20 @@ class CombatManager {
         this.inCombat = true;
         this.currentEnemy = monster;
         this.currentPhase = 'preparation';
+        this.currentTeam = new Team('player');
+        this.enemyTeam = new Team('enemy');
+        this.currentTeam.addEntity(this.game.character);
+        this.enemyTeam.addEntity(this.currentEnemy);
+        this.gameOrder = [];
+        for (let i = 0; i < Math.max(this.currentTeam.entities.length, this.enemyTeam.entities.length); i++) {
+            if (this.currentTeam.entities[i]) {
+                this.gameOrder.push(this.currentTeam.entities[i]);
+            }
+            if (this.enemyTeam.entities[i]) {
+                this.gameOrder.push(this.enemyTeam.entities[i]);
+            }
+        }
+        this.currentEntityIdx = 0;
         this.ui.show();
         
         // Set character to combat-idle animation
@@ -153,6 +171,36 @@ class CombatManager {
         this.startPlayerTurn();
     }
 
+    // Create a function that will check whose entity is next in the game order
+    getNextEntity() {
+        // If all entities are dead, end combat
+        if (this.currentTeam.getLivingEntities().length === 0 || this.enemyTeam.getLivingEntities().length === 0) {
+            const playerWon = this.currentTeam.getLivingEntities().length > 0;  
+            this.endCombat(playerWon);
+            return;
+        }
+        this.currentEntityIdx++;
+        if (this.currentEntityIdx >= this.gameOrder.length) {
+            this.currentEntityIdx = 0;
+        }
+        this.currentEntity = this.gameOrder[this.currentEntityIdx];
+        // Check if entity is dead  
+        if (this.currentEntity.health <= 0) {
+            this.getNextEntity();
+        }
+    }
+
+    startTurn() {
+        this.getNextEntity();
+
+        // If entity is character, start player turn
+        if (this.currentEntity === this.game.character) {
+            this.startPlayerTurn();
+        } else {
+            this.startMonsterTurn();
+        }   
+    }
+
     startPlayerTurn() { 
         this.turnCounter++;
         this.currentPhase = 'playerTurn';
@@ -203,7 +251,7 @@ class CombatManager {
 
     endPlayerTurn() {
         clearTimeout(this.turnTimer);
-        this.startMonsterTurn();
+        this.startTurn();
     }
 
     startMonsterTurn() {
@@ -219,21 +267,10 @@ class CombatManager {
         
         // Start monster AI
         setTimeout(() => {
-            this.performMonsterTurn();
+            this.currentEnemy.performTurn(this.game.character, this.game.grid, this.ui);
+            this.startTurn();
         }, 1000);
-    }
 
-    performMonsterTurn() {
-        const monsterWon = this.currentEnemy.performTurn(this.game.character, this.game.grid, this.ui);
-        if (monsterWon) {
-            this.endCombat(false);
-            return;
-        }
-        
-        // End turn after a delay
-        setTimeout(() => {
-            this.startPlayerTurn();
-        }, 1000);
     }
 
     endCombat(playerWon) {
