@@ -48,7 +48,7 @@ class Minotaur extends Monster {
             const newY = this.y + Math.round(Math.sin(angle));
 
             // Move if valid position
-            if (this.useMP(1) && !grid.hasObstacle(newX, newY)) {
+            if (this.useMP(1) && !grid.hasObstacle(newX, newY) && !(newX === character.x && newY === character.y)) {
                 this.x = newX;
                 this.y = newY;
                 combatUI.updateMonsterStats(this);

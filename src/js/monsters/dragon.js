@@ -35,7 +35,7 @@ class Dragon extends Monster {
     }
 
     performTurn(character, grid, combatUI) {
-        console.log('Minotaur performing turn');
+        console.log('Dragon performing turn');
         while (!this.isInAttackRange(this.attackRange, character) && this.currentMP > 0) {
             // Move towards player
             const dx = character.x - this.x;
@@ -46,8 +46,8 @@ class Dragon extends Monster {
             const newX = this.x + Math.round(Math.cos(angle));
             const newY = this.y + Math.round(Math.sin(angle));
 
-            // Move if valid position
-            if (this.useMP(1) && !grid.hasObstacle(newX, newY)) {
+            // Move if valid position and not on player's tile
+            if (this.useMP(1) && !grid.hasObstacle(newX, newY) && !(newX === character.x && newY === character.y)) {
                 this.x = newX;
                 this.y = newY;
                 combatUI.updateMonsterStats(this);
