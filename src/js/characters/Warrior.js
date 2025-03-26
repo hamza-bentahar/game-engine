@@ -11,7 +11,6 @@ class Warrior extends Character {
         this.currentAP = this.maxAP;
         this.maxMP = 3;
         this.currentMP = this.maxMP;
-        this.attackRange = 1; // Melee range
         
         // Warrior-specific animations
         this.animations = {

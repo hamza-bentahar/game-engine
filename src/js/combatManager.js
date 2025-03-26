@@ -182,6 +182,7 @@ class CombatManager {
         this.currentEntityIdx++;
         if (this.currentEntityIdx >= this.gameOrder.length) {
             this.currentEntityIdx = 0;
+            this.turnCounter++;
         }
         this.currentEntity = this.gameOrder[this.currentEntityIdx];
         // Check if entity is dead  
@@ -202,7 +203,6 @@ class CombatManager {
     }
 
     startPlayerTurn() { 
-        this.turnCounter++;
         this.currentPhase = 'playerTurn';
         this.ui.updatePhaseDisplay(this.currentPhase);
         

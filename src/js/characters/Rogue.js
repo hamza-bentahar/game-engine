@@ -11,9 +11,6 @@ class Rogue extends Character {
         this.currentAP = this.maxAP;
         this.maxMP = 4;  // More MP for mobility
         this.currentMP = this.maxMP;
-        this.attackRange = 2; // Medium range for throwing daggers
-        this.attackDamage = 20;
-        this.criticalChance = 0.2; // 20% chance for critical hit
 
         // Rogue moves faster
         this.moveSpeed = 0.07;

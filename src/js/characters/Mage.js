@@ -11,7 +11,6 @@ class Mage extends Character {
         this.currentAP = this.maxAP;
         this.maxMP = 3;  // Less MP due to being ranged
         this.currentMP = this.maxMP;
-        this.attackRange = 5; // Longer attack range
         
         // Override base spellList with mage-specific spells
         this.spellList = [
@@ -56,7 +55,7 @@ class Mage extends Character {
                 minDamage: 4,
                 maxDamage: 7,
                 cost: 3,
-                range: 4,
+                range: 1,
                 element: 'earth',
                 description: 'Summons a spike of earth to impale enemies, dealing earth damage.'
             }
