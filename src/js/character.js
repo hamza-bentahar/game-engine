@@ -654,8 +654,9 @@ class Character {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         const nameY = drawY - 10;
-        ctx.strokeText(this.name, screenX, nameY);
-        ctx.fillText(this.name, screenX, nameY);
+        const displayText = `${this.name} Lv.${this.level}`;
+        ctx.strokeText(displayText, screenX, nameY);
+        ctx.fillText(displayText, screenX, nameY);
 
         // Draw speed indicator only in debug mode
         if (this.grid.debugMode) {

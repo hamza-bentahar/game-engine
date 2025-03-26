@@ -385,17 +385,21 @@ class IsometricGame {
     
     addMonster(type, position) {
         let monster;
+        // Calculate monster level: player level ± 2 levels, minimum level 1
+        const levelVariation = Math.floor(Math.random() * 5) - 2; // Random number between -2 and +2
+        const monsterLevel = Math.max(1, this.character.level + levelVariation);
+        
         if (type === 'dragon') {
-            monster = new Dragon(this.grid, type);
+            monster = new Dragon(this.grid, type, monsterLevel);
         } else if (type === 'minotaur') {
-            monster = new Minotaur(this.grid, type);
+            monster = new Minotaur(this.grid, type, monsterLevel);
         } else {
             console.warn(`Unknown monster type: ${type}`);
             return;
         }
         monster.x = position.x;
         monster.y = position.y;
-        console.log(`Spawned ${type} monster at (${monster.x}, ${monster.y})`);
+        console.log(`Spawned level ${monsterLevel} ${type} monster at (${monster.x}, ${monster.y})`);
         this.monsters.push(monster);
     }
 

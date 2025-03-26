@@ -1,12 +1,14 @@
 import { Monster } from '../monster.js';
 
 class Dragon extends Monster {
-    constructor(grid, monsterType = 'dragon') {
+    constructor(grid, monsterType = 'dragon', level = 1) {
         // Call parent constructor with monster-specific sprite
-        super(grid, `${monsterType}`);
+        super(grid, `${monsterType}`, 'Dragon');
         
         this.monsterType = monsterType;
-        this.maxHealth = 30;
+        this.level = level;
+        // Base health is 30, scales by 20 per level like characters
+        this.maxHealth = 30 + (level - 1) * 20;
         this.health = this.maxHealth;
         this.isAlive = true;
         this.isAggressive = true;
@@ -18,7 +20,9 @@ class Dragon extends Monster {
         this.currentMP = this.maxMP;
         
         // Override scale for monsters
-        this.scale = 2;
+        this.scale = 1 + (level * 0.3);
+        this.intelligence = 10 + (level * 5);
+        this.fireResistance = Math.max((15 + (level * 2)), 40);
 
         // Add sprite load event listener
         this.spriteSheet.onload = () => {

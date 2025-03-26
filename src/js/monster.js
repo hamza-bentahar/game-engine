@@ -1,8 +1,8 @@
 import { Character } from './character.js';
 
 class Monster extends Character {
-    constructor(grid, monsterType = 'dragon') {
-        super(grid, `${monsterType}_monster`);
+    constructor(grid, monsterType, characterName) {
+        super(grid, `${monsterType}_monster`, characterName);
     }
 
     update() {
