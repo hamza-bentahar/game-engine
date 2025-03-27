@@ -4,8 +4,8 @@ class CombatUI {
         this.createTimerDisplay();
         this.createPhaseDisplay();
         this.createMonsterStats();
-        this.createCombatHistory();
         this.createActionButtons();
+        this.createCombatHistory();
     }
 
     createMainContainer() {
@@ -68,6 +68,7 @@ class CombatUI {
         // Create combat history container
         this.historyContainer = document.createElement('div');
         this.historyContainer.id = 'combat-history';
+        this.historyContainer.style.marginTop = '20px';
         this.historyContainer.style.marginBottom = '15px';
         this.historyContainer.style.maxHeight = '200px';
         this.historyContainer.style.overflowY = 'auto';
@@ -90,8 +91,8 @@ class CombatUI {
         this.historyList.style.gap = '5px';
         this.historyContainer.appendChild(this.historyList);
 
-        // Add to main container before action buttons
-        this.combatUI.insertBefore(this.historyContainer, this.actionButtons);
+        // Add to main container after action buttons
+        this.combatUI.appendChild(this.historyContainer);
     }
 
     createActionButtons() {
