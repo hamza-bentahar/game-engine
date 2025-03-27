@@ -22,7 +22,20 @@ class Minotaur extends Monster {
         
         // Override scale for monsters
         this.scale = 1 + (level * 0.3);
-        this.strength
+        this.strength = 10 + (level * 5);
+        this.earthResistance = 10 + (level * 5);
+
+        this.spellList = [
+            {
+                name: 'Tackle',
+                minDamage: 2,
+                maxDamage: 4,
+                cost: 2,
+                range: 1,
+                element: 'strength',
+                description: 'A basic attack that deals physical damage to the enemy.'
+            }
+        ];
 
         // Add sprite load event listener
         this.spriteSheet.onload = () => {
@@ -50,7 +63,7 @@ class Minotaur extends Monster {
             const newX = this.x + Math.round(Math.cos(angle));
             const newY = this.y + Math.round(Math.sin(angle));
 
-            // Move if valid position
+            // Move if valid position and not on player's tile
             if (this.useMP(1) && !grid.hasObstacle(newX, newY) && !(newX === character.x && newY === character.y)) {
                 this.x = newX;
                 this.y = newY;
@@ -60,15 +73,17 @@ class Minotaur extends Monster {
                 break;
             }
         }
-        const actions = [];
 
         // Attack if in range
-        if (this.isInAttackRange(character, this.attackRange)) {
-            const damage = this.attack(character);
+        const actions = [];
+        const spellName = 'Tackle';
+        const spell = this.getSpell(spellName);
+        if (this.isInAttackRange(character, spell.range)) {
+            const damage = this.attack(character, spellName);
             character.takeDamage(damage);
             combatUI.updateMonsterStats();
-            actions.push({
-                spellName: 'Basic Attack',
+            actions.push({  
+                spellName: spellName,
                 damage: damage
             });
         }

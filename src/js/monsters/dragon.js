@@ -23,6 +23,20 @@ class Dragon extends Monster {
         this.scale = 1 + (level * 0.3);
         this.intelligence = 10 + (level * 5);
 
+        this.fireResistance = Math.max((15 + (level * 2)), 40);
+
+        this.spellList = [
+            {
+                name: 'Fireball',
+                minDamage: 5,
+                maxDamage: 9,
+                cost: 3,
+                range: 5,
+                element: 'fire',
+                description: 'A fiery explosion that deals fire damage to all enemies in range.'
+            }
+        ];
+
         // Add sprite load event listener
         this.spriteSheet.onload = () => {
             console.log(`${monsterType} sprite sheet loaded successfully`);
@@ -62,12 +76,14 @@ class Dragon extends Monster {
 
         // Attack if in range
         const actions = [];
-        if (this.isInAttackRange(character, this.attackRange)) {
-            const damage = this.attack(character);
+        const spellName = 'Fireball';
+        const spell = this.getSpell(spellName);
+        if (this.isInAttackRange(character, spell.range)) {
+            const damage = this.attack(character, spellName);
             character.takeDamage(damage);
             combatUI.updateMonsterStats();
             actions.push({  
-                spellName: 'Basic Attack',
+                spellName: spellName,
                 damage: damage
             });
         }

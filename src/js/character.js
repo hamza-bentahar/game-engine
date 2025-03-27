@@ -218,10 +218,14 @@ class Character {
         return damage;
     }
 
+    getSpell(spellName) {
+        return this.spellList.find(s => s.name === spellName);
+    }
+
     // Base attack method - should be overridden by specific classes
     attack(target, spellName = 'Basic Attack') {
         console.log('Character attacking with', spellName);
-        const spell = this.spellList.find(s => s.name === spellName);
+        const spell = this.getSpell(spellName)
         
         if (!spell) {
             console.error('Spell not found:', spellName);
