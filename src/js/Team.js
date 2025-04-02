@@ -5,6 +5,7 @@ export class Team {
         this.type = this.determineTeamType(entities);
     }
 
+    
     determineTeamType(entities) {
         if (entities.length === 0) return null;
         // Check if first entity is a player or monster to determine team type
